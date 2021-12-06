@@ -2,6 +2,9 @@
 
 Allow StreamField blocks to be edited via your Wagtail site's frontend.
 
+## Demo
+
+<video src="https://user-images.githubusercontent.com/1122893/144843168-9ac50c50-6596-43bc-a1a6-53861e382ae0.mp4" width="962"></video>
 
 ## Installation
 
