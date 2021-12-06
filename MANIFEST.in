@@ -1,0 +1,6 @@
+include LICENSE *.rst *.txt *.md
+recursive-include liveedit *
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+#prune tests
