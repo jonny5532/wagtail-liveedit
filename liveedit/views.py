@@ -22,19 +22,22 @@ from urllib.parse import urlencode, urlparse
 def _find_block(stream_value, raw_data, block_id):
     for i in range(len(raw_data)):
         if raw_data[i]['id']==block_id:
-            return stream_value[i].block, stream_value[i].value, stream_value
+            def set_value(val):
+                stream_value[i].value = val
+            return stream_value[i].block, stream_value[i].value, set_value, stream_value
 
         #check field values for any potential block lists
-        for k, v in raw_data[i]['value'].items():
-            if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
-                rb, rv, rp = _find_block(stream_value[i].value[k], v, block_id)
-                if rb:
-                    return rb, rv, rp
+        if isinstance(raw_data[i]['value'], dict):
+            for k, v in raw_data[i]['value'].items():
+                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                    rb, rv, rsv, rp = _find_block(stream_value[i].value[k], v, block_id)
+                    if rb:
+                        return rb, rv, rsv, rp
 
     return None, None, None
 
 def find_block(stream_value, block_id):
-    #returns Block, StreamValue.StreamChild, parent StreamValue
+    #returns Block, StreamValue.StreamChild, setter function to update value, parent StreamValue
 
     return _find_block(stream_value, stream_value.raw_data, block_id)
 
@@ -50,11 +53,12 @@ def modify_block(action, blocks, block_id):
             return True #did the move
 
         #search through all fields for any potential block lists
-        for v in blocks[i]['value'].values():
-            if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
-                if modify_block(action, v, block_id):
-                    #if block was moved, stop looking
-                    return True
+        if isinstance(blocks[i]['value'], dict):
+            for v in blocks[i]['value'].values():
+                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                    if modify_block(action, v, block_id):
+                        #if block was moved, stop looking
+                        return True
 
 def get_latest_revision_and_save_function(obj):
     """
@@ -126,8 +130,8 @@ def action_view(request):
     page_url = urlparse(request.POST['page_url'])
     page_url = page_url._replace(fragment='le-' + block_id)
 
-    return HttpResponseRedirect(page_url.geturl())
- 
+    return HttpResponseRedirect(page_url.geturl() + '#le-' + block_id)
+
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
 def edit_block_view(request):
     from wagtail.admin.views.pages.edit import EditView
@@ -139,7 +143,7 @@ def edit_block_view(request):
     obj, save = get_latest_revision_and_save_function(obj)
     value = getattr(obj, request.GET['object_field'])
 
-    block, block_value, parent = find_block(value, request.GET['id'])
+    block, block_value, set_value, parent = find_block(value, request.GET['id'])
    
     errors = ErrorWrapper(None)
     if request.method=="POST" and request.POST.get('delete'):
@@ -154,8 +158,12 @@ def edit_block_view(request):
         try:
             val = block.clean(val)
 
-            for kk, vv in val.items():
-                block_value[kk] = vv
+            set_value(val)
+            print('val is', repr(val))
+            print('block_value is', repr(block_value))
+
+            # for kk, vv in val.items():
+            #     block_value[kk] = vv
             save()
 
             return ReloadResponse()
@@ -179,7 +187,7 @@ def append_block_view(request):
     obj, save = get_latest_revision_and_save_function(obj)
     value = getattr(obj, request.GET['object_field'])
 
-    _, _, parent_value = find_block(value, request.GET['id'])
+    _, _, _, parent_value = find_block(value, request.GET['id'])
 
     parent_block = parent_value.stream_block
     blank_value = StreamValue(parent_value.stream_block, [])
