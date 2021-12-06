@@ -1,0 +1,46 @@
+{% load wagtailadmin_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    {{ stylesheet_tags }}
+    {% include "wagtailadmin/pages/_editor_css.html" %}
+
+    <style>
+    body { background: #ffffff; }
+    </style>
+</head>
+<body>
+    <div data-sprite></div>
+
+    {{ script_tags }}
+    {% include "wagtailadmin/pages/_editor_js.html" %}
+    {{ form_media }}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="c-sf-container">
+            <div class="c-sf-block__content-inner">
+                <div data-contentpath="body">
+                    <fieldset>
+                        <ul class="fields">
+                            <li>
+                                <div class="field block_field block_widget " >
+                                    <div class="field-content">
+                                        <div class="input  ">
+                                            {{ form_html }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </fieldset>
+                </div>
+                
+                <div style="float: right"><input type="submit" name="delete" value="Delete" onclick="return confirm('Delete block - are you sure?')" class="button button-secondary no"></div>
+                <input type="submit" value="Save" class="button"><!--<a href="#" class="button button-secondary" onclick="window.parent.postMessage({action:'close_panel'}, '*')">Close without saving</a>-->
+            </div>
+        </div>
+    </form>
+
+</body>
+</html>

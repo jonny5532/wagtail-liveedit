@@ -1,0 +1,97 @@
+[data-liveedit-active]:hover {
+    box-shadow: inset 0 0 2px rgba(0, 125, 126, 0.5);
+}
+
+.liveedit-bar {
+    position: absolute;
+    z-index: 99;
+    display: none;
+    line-height: 11px;
+}
+
+.liveedit-bar button {
+    vertical-align: top;
+    border: 0;
+    background: rgb(0, 125, 126);
+    color: #ffffff;
+    text-transform: uppercase;
+    font: 12px Arial, Helvetica, sans-serif;
+    line-height: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 1px 4px 0;
+}
+.liveedit-bar button:hover { background: rgb(0, 103, 106); }
+
+[data-liveedit-active]:hover > .liveedit-bar { display: block; }
+
+
+.liveedit-panel { 
+    background: #fff;
+    position: fixed;
+    width: 100%;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 10000; /* need to overlap wagtail-user-bar which is 9999 */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    transition: bottom 0.3s ease;
+    bottom: -60vh;
+}
+
+.liveedit-topbar {
+    background: #007d7e;
+    height: 38px;
+    padding: 5px;
+}
+
+.liveedit-topbar svg {
+    width: 16px; 
+    fill: #ffffff; 
+    margin: 7px 14px 0 0;
+}
+
+.liveedit-title {
+    color: #ffffff;
+    font: 16px Arial, Helvetica, sans-serif;
+    line-height: 24px;
+    font-weight: bold;
+    padding: 2px 20px;
+    text-transform: uppercase;
+    float: left;
+}
+
+.liveedit-panel iframe {
+    border: 0;
+    width: 100%;
+    flex: 1 0 auto;
+}
+
+.liveedit-notice {
+    position: absolute;
+    z-index: 1000;
+    background: #141414;
+    color: #ffffff;
+    padding: 5px 5px 5px 10px;
+    top: 0px;
+    left: calc(50% - 160px);
+    width: 320px;
+    font: 12px Arial, Helvetica, sans-serif;
+    line-height: 22px;
+}
+
+.liveedit-notice a {
+    float: right;
+    display: inline-block;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    text-decoration: none;
+    text-transform: uppercase;
+    padding: 0 6px;
+    line-height: 20px;
+}
+
+.liveedit-notice a:hover {
+    color: #141414;
+    background: #ffffff;
+}
