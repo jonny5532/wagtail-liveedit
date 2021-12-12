@@ -26,7 +26,13 @@ def _find_block(stream_value, raw_data, block_id):
                 stream_value[i].value = val
             return stream_value[i].block, stream_value[i].value, set_value, stream_value
 
-        #check field values for any potential block lists
+        # is this a streamblock/listblock?
+        if isinstance(raw_data[i]['value'], collections.Sequence) and len(raw_data[i]['value']) and hasattr(raw_data[i]['value'][0], 'get') and raw_data[i]['value'][0].get('id'):
+            rb, rv, rsv, rp = _find_block(stream_value[i].value, raw_data[i]['value'], block_id)
+            if rb:
+                return rb, rv, rsv, rp
+
+        #check structblock field values for any potential block lists
         if isinstance(raw_data[i]['value'], dict):
             for k, v in raw_data[i]['value'].items():
                 if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
@@ -34,7 +40,7 @@ def _find_block(stream_value, raw_data, block_id):
                     if rb:
                         return rb, rv, rsv, rp
 
-    return None, None, None
+    return None, None, None, None
 
 def find_block(stream_value, block_id):
     #returns Block, StreamValue.StreamChild, setter function to update value, parent StreamValue
@@ -51,6 +57,14 @@ def modify_block(action, blocks, block_id):
             #swap with next
             blocks[i+1], blocks[i] = blocks[i], blocks[i+1]
             return True #did the move
+
+        #is this a list?
+        if isinstance(blocks[i]['value'], collections.Sequence):
+            for v in blocks[i]['value']:
+                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                    if modify_block(action, v, block_id):
+                        #if block was moved, stop looking
+                        return True
 
         #search through all fields for any potential block lists
         if isinstance(blocks[i]['value'], dict):
@@ -144,7 +158,7 @@ def edit_block_view(request):
     value = getattr(obj, request.GET['object_field'])
 
     block, block_value, set_value, parent = find_block(value, request.GET['id'])
-   
+
     errors = ErrorWrapper(None)
     if request.method=="POST" and request.POST.get('delete'):
         for i, block in enumerate(parent):
@@ -159,11 +173,9 @@ def edit_block_view(request):
             val = block.clean(val)
 
             set_value(val)
-            print('val is', repr(val))
-            print('block_value is', repr(block_value))
+            #print('val is', repr(val))
+            #print('block_value is', repr(block_value))
 
-            # for kk, vv in val.items():
-            #     block_value[kk] = vv
             save()
 
             return ReloadResponse()
