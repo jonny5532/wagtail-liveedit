@@ -60,8 +60,17 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
                     'body': "<p>A second text inside a section.</p>"
                 }},
             ]},
+            {'type': 'list', 'id':str(uuid.uuid4()), 'value': {
+                'title': 'This is a list',
+                'items': [
+                    {'type': 'item', 'id':str(uuid.uuid4()), 'value': {
+                        'body': '<p>Testing</p>'
+                    }}
+                ],
+            }},
         ])
         self.root_page.add_child(instance=self.test_page)
+        self.content_type = ContentType.objects.get_for_model(TestPage)
 
     def test_liveedit_attributes(self):
         ret = render_to_string(
@@ -92,10 +101,8 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
     def test_block_edit_form(self):
         self.login(user=self.user)
 
-        content_type = ContentType.objects.get_for_model(TestPage)
-
         ret = self.client.get('/__liveedit__/edit-block/', {
-            'content_type_id':content_type.id,
+            'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
             'id':self.test_page.body[1].value[0].id,
@@ -120,10 +127,8 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
     def test_block_edit(self):
         self.login(user=self.user)
 
-        content_type = ContentType.objects.get_for_model(TestPage)
-
         ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
-            'content_type_id':content_type.id,
+            'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
             'id':self.test_page.body[0].id,
@@ -137,3 +142,73 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
 
         #print(str(TestPage.objects.get(pk=self.test_page.id).body))
         assert '<p>This is the replacement rich text.</p>' in str(TestPage.objects.get(pk=self.test_page.id).body)
+
+    def _do_action(self, block_id, action):
+        self.login(user=self.user)
+
+        ret = self.client.post('/__liveedit__/action/', {
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':block_id,
+            'page_url':'/test/',
+            'action':action,
+        })
+
+        return TestPage.objects.get(pk=self.test_page.id).body
+
+    def test_block_move_down(self):
+        block_id = self.test_page.body[0].id
+        body = self._do_action(block_id, 'move_down')
+
+        self.assertEqual(
+            body[1].id,
+            block_id,
+        )
+
+    def test_block_move_up(self):
+        block_id = self.test_page.body[1].id
+        body = self._do_action(block_id, 'move_up')
+
+        self.assertEqual(
+            body[0].id,
+            block_id,
+        )
+
+    def test_block_delete(self):
+        self.login(user=self.user)
+
+        n = len(self.test_page.body)
+
+        ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[1].id,
+        }), {
+            'delete':'1'        
+        })
+
+        self.assertEqual(
+            len(TestPage.objects.get(pk=self.test_page.id).body),
+            n-1
+        )
+
+    def test_block_delete_nested(self):
+        self.login(user=self.user)
+
+        n = len(self.test_page.body[1].value)
+
+        ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[1].value[0].id,
+        }), {
+            'delete':'1'        
+        })
+
+        self.assertEqual(
+            len(TestPage.objects.get(pk=self.test_page.id).body[1].value),
+            n-1
+        )

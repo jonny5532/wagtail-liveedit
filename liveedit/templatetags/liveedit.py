@@ -39,10 +39,6 @@ def liveedit_attributes(context):
         json.dumps(context['liveedit_data'])
     )
 
-@register.filter
-def liveedit_value(v, key):
-    return v
-
 @register.simple_tag(takes_context=True)
 def liveedit_include_block(context, block, object=None, field=None):
     context = context.flatten()

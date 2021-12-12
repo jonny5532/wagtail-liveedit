@@ -19,5 +19,14 @@ class TestPage(Page):
             ], template="text_block.html")),
         ])),
 
+        ('list', blocks.StructBlock([
+            ('title', blocks.TextBlock(required=False)),
+            ('items', blocks.StreamBlock([
+                ('item', blocks.StructBlock([
+                    ('body', blocks.RichTextBlock(required=False)),
+                ], template="text_block.html")),
+            ])),
+        ])),
+
     ], null=True, blank=True)
 
