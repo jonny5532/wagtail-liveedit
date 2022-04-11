@@ -1,5 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
-from django.db import connection
+from django.db import connection, transaction
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.test import RequestFactory
@@ -23,21 +23,23 @@ class MockRequest:
         self.user = user
 
 class BackendTestCase(WagtailPageTests, WagtailTestUtils):
-    @classmethod
-    def setUpClass(cls):
-        with connection.schema_editor() as schema_editor:
-            schema_editor.create_model(TestPage)
-            ContentType.objects.get_for_model(TestPage)
-        super().setUpClass()
+    # @classmethod
+    # def setUpClass(cls):
+    #     with connection.schema_editor() as schema_editor:
+    #         schema_editor.create_model(TestPage)
+    #         ContentType.objects.get_for_model(TestPage)
+    #     super().setUpClass()
 
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        with connection.schema_editor() as editor:
-            editor.delete_model(TestPage)
-        connection.close()
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super().tearDownClass()
+    #     with connection.schema_editor() as editor:
+    #         editor.delete_model(TestPage)
+    #     connection.close()
 
     def setUp(self):
+        super(BackendTestCase, self).setUp()
+
         self.user = self.create_superuser(
             username='administrator',
             email='administrator@email.com',

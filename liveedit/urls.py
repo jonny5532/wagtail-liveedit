@@ -1,9 +1,9 @@
-from django.conf.urls import url
+from django.urls import re_path
 
 from . import views
 
 urlpatterns = [
-    url(r'^action/', views.action_view),
-    url(r'^append-block/', views.append_block_view),
-    url(r'^edit-block/', views.edit_block_view),
+    re_path(r'^action/', views.action_view),
+    re_path(r'^append-block/', views.append_block_view),
+    re_path(r'^edit-block/', views.edit_block_view),
 ]

@@ -117,7 +117,7 @@
                 '&content_type_id=' + encodeURIComponent(data.content_type_id) +
                 '&object_id=' + encodeURIComponent(data.object_id) +
                 '&object_field=' + encodeURIComponent(data.object_field),
-                "Edit " + data.block_type,
+                "Edit " + data.block_type.replace(/_/g, ' '),
             );
         });
         bar.appendChild(btn);

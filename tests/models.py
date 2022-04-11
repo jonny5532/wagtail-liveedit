@@ -3,9 +3,11 @@ from wagtail.core.fields import StreamField
 from wagtail.core.models import Page
 
 class TestPage(Page):
-    class Meta:
-        app_label = 'tests'
-        managed = False
+    #class Meta:
+        #app_label = 'tests'
+        #managed = False
+
+    template = 'page.html'
 
     body = StreamField([
 
