@@ -15,6 +15,7 @@ from wagtail.core.blocks.stream_block import StreamValue
 from wagtail.core.models import Page
 
 import collections
+import json
 import re
 from urllib.parse import urlencode, urlparse
 
@@ -112,9 +113,10 @@ def render_edit_panel(request, d):
     ret['X-Frame-Options'] = 'SAMEORIGIN'
     return ret
 
-def ReloadResponse():
+def ReloadResponse(jump_to_id=None):
+    msg = {'action':"reload", 'jump_to_id':jump_to_id}
     ret = HttpResponse('''
-    <script>window.parent.postMessage({action:"reload"}, '*');</script>
+    <script>window.parent.postMessage(''' + json.dumps(msg) + ''', '*');</script>
     ''')
     ret['X-Frame-Options'] = 'SAMEORIGIN'
     return ret
@@ -141,10 +143,7 @@ def action_view(request):
     modify_block(request.POST['action'], value.raw_data, block_id)
     save()
 
-    page_url = urlparse(request.POST['page_url'])
-    page_url = page_url._replace(fragment='le-' + block_id)
-
-    return HttpResponseRedirect(page_url.geturl() + '#le-' + block_id)
+    return HttpResponseRedirect(request.POST['redirect_url'])
 
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
 def edit_block_view(request):
@@ -178,7 +177,7 @@ def edit_block_view(request):
 
             save()
 
-            return ReloadResponse()
+            return ReloadResponse(request.GET['id'])
 
         except forms.ValidationError as e:
             errors = ErrorWrapper(e)

@@ -4,9 +4,19 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html
 
-from wagtail.core.models import Page
+from wagtail.core.models import Page, PageRevision
 
 import json
+
+
+# monkey-patch PageRevision.as_page_object to store revision id on pages
+original_as_page_object = PageRevision.as_page_object
+def as_page_object(self):
+    page = original_as_page_object(self)
+    page._live_edit_revision_id = self.id
+    return page
+PageRevision.as_page_object = as_page_object
+
 
 register = template.Library()
 

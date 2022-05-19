@@ -19,14 +19,19 @@
         bar.classList.add('liveedit-bar');
         bar.setAttribute('id', 'le-' + data.id);
 
-        function submitAction(action) {
+        function submitAction(action, btn) {
             var form = document.createElement('form');
             form.style.display = 'none';
             form.setAttribute('method', 'post');
             form.setAttribute('action', '/__liveedit__/action/');
 
             data['action'] = action;
-            data['page_url'] = window.location.href;
+            data['redirect_url'] = window.location.pathname + window.location.search + '#le-' + data.id;
+            if(btn) {
+                // send distance of element from top of viewport
+                data['redirect_url'] += '_y' + parseInt(btn.getBoundingClientRect().top);
+            }
+
             Object.keys(data).forEach(function(k) {
                 var inp = document.createElement('input');
                 inp.setAttribute('type', 'hidden');
@@ -43,7 +48,8 @@
         btn.appendChild(document.createTextNode('🡄'));
         btn.addEventListener('click', function(ev) {
             ev.preventDefault();
-            submitAction('move_up');
+            ev.stopPropagation();
+            submitAction('move_up', btn);
         });
         bar.appendChild(btn);
 
@@ -51,7 +57,8 @@
         btn.appendChild(document.createTextNode('🡆'));
         btn.addEventListener('click', function(ev) {
             ev.preventDefault();
-            submitAction('move_down');
+            ev.stopPropagation();
+            submitAction('move_down', btn);
         });
         bar.appendChild(btn);
 
@@ -112,6 +119,7 @@
         btn.appendChild(document.createTextNode('Edit'));
         btn.addEventListener('click', function(ev) {
             ev.preventDefault();
+            ev.stopPropagation();
             loadEditPanel(
                 '/__liveedit__/edit-block/?id=' + encodeURIComponent(data.id) + 
                 '&content_type_id=' + encodeURIComponent(data.content_type_id) +
@@ -126,6 +134,7 @@
         btn.appendChild(document.createTextNode('＋'));
         btn.addEventListener('click', function(ev) {
             ev.preventDefault();
+            ev.stopPropagation();
             loadEditPanel(
                 '/__liveedit__/append-block/?id=' + encodeURIComponent(data.id) + 
                 '&content_type_id=' + encodeURIComponent(data.content_type_id) +
@@ -149,6 +158,12 @@
             if(liveedit_context.edit_panel) {
                 liveedit_context.edit_panel.style.bottom = '-60vh';
             }
+            var lebar = document.getElementById('le-' + event.data.jump_to_id);
+            if(event.data.jump_to_id && lebar && lebar.parentElement) {
+                // append editing id and distance of top of viewport
+                // (but won't reload due to path staying the same)
+                window.location.assign(window.location.pathname + window.location.search + '#le-' + event.data.jump_to_id + '_y' + parseInt(lebar.parentElement.getBoundingClientRect().top));
+            }
             window.location.reload();
         } else if(event.data && event.data.action=="close_panel") {
             liveedit_close_panel();
@@ -167,5 +182,23 @@
         notice.appendChild(btn);
 
         document.body.appendChild(notice);
+    }
+
+    /* Jump to last-actioned block */
+    if(window.location.hash.indexOf('#le-')===0) {
+        var bits = window.location.hash.split(/_/g);
+        var p = document.querySelector(bits[0]);
+        if(p && p.parentElement) {
+            var y_offset = 100;
+            bits.slice(1).forEach(function(b) {
+                if(b.substring(0, 1)=='y') y_offset = parseInt(b.substring(1));
+            });
+            // TODO: a reliable way to retrigger this as the page loads
+            var do_jump = function() {
+                window.scrollTo(0, document.documentElement.scrollTop + p.parentElement.getBoundingClientRect().top - y_offset);
+            };
+            do_jump();
+            setTimeout(do_jump, 200);
+        }
     }
 })();
