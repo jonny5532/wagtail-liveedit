@@ -4,19 +4,26 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html
 
+from wagtail.admin.views.pages.preview import PreviewOnEdit
 from wagtail.core.models import Page, PageRevision
 
 import json
 
-
 # monkey-patch PageRevision.as_page_object to store revision id on pages
 original_as_page_object = PageRevision.as_page_object
-def as_page_object(self):
-    page = original_as_page_object(self)
+def as_page_object(self, *args, **kwargs):
+    page = original_as_page_object(self, *args, **kwargs)
     page._live_edit_revision_id = self.id
     return page
 PageRevision.as_page_object = as_page_object
 
+# monkey-patch PreviewOnEdit.get_page so we can tell if we're looking at a unsaved preview
+original_get_page = PreviewOnEdit.get_page
+def get_page(self, *args, **kwargs):
+    page = original_get_page(self, *args, **kwargs)
+    page._live_edit_is_preview = True
+    return page
+PreviewOnEdit.get_page = get_page
 
 register = template.Library()
 
@@ -74,7 +81,7 @@ def liveedit_include_block(context, block, object=None, field=None):
     if object and field:
         if isinstance(object, Page):
             if object.has_unpublished_changes:
-                # There is a unpublished version of this page, are we looking at it?
+                # There is a new unpublished version of this page, are we looking at it?
                 cur_rev_id = getattr(object, '_live_edit_revision_id', None)
                 latest_rev_id = object.get_latest_revision().id
 
@@ -84,13 +91,8 @@ def liveedit_include_block(context, block, object=None, field=None):
                             reverse('wagtailadmin_pages:revisions_view', args=(object.id, latest_rev_id))
                         )
 
-                live_edit_json = getattr(object, '_live_edit_json', None)
-                if live_edit_json is None:
-                    live_edit_json = object.get_latest_revision().content_json
-
-                # Has page content been tampered with since it was loaded? (eg, by a unsaved preview?)
-                if live_edit_json and live_edit_json!=object.to_json():
-                    # Yes, so don't allow editing
+                if getattr(object, '_live_edit_is_preview', False):
+                    # We're viewing an unsaved preview, don't allow editing
                     return finish()
 
             elif getattr(request, 'is_dummy', False):
