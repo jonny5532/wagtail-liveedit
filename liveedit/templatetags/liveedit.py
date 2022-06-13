@@ -1,8 +1,10 @@
 from django import template
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.module_loading import import_string
 
 from wagtail.admin.views.pages.preview import PreviewOnEdit
 from wagtail.core.models import Page, PageRevision
@@ -27,10 +29,17 @@ PreviewOnEdit.get_page = get_page
 
 register = template.Library()
 
+is_enabled = import_string(getattr(settings, 'LIVEEDIT_ENABLED_CHECK', 'liveedit.utils.is_enabled'))
+
+def is_authenticated(request):
+    if request and request.user and request.user.is_authenticated:
+        return True
+    return False
+
 @register.simple_tag(takes_context=True)
 def liveedit_css(context):
     request = context.get('request')
-    if not request or not request.user or not request.user.is_authenticated: 
+    if not is_enabled(request) or not is_authenticated(request):
         return ''
     return format_html(
         '<link rel="stylesheet" type="text/css" href="{}">',
@@ -40,7 +49,7 @@ def liveedit_css(context):
 @register.simple_tag(takes_context=True)
 def liveedit_js(context):
     request = context.get('request')
-    if not request or not request.user or not request.user.is_authenticated: 
+    if not is_enabled(request) or not is_authenticated(request):
         return ''
     return format_html(
         '<script type="text/javascript" src="{}"></script>',
@@ -64,7 +73,7 @@ def liveedit_include_block(context, block, object=None, field=None):
     def finish():
         return block.render_as_block(context)
 
-    if not request or not request.user or not request.user.is_authenticated: 
+    if not is_enabled(request) or not is_authenticated(request):
         return finish()
 
     if object and isinstance(object, Page):
