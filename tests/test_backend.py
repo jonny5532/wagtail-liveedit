@@ -153,7 +153,7 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             'object_id':self.test_page.id,
             'object_field':'body',
             'id':block_id,
-            'page_url':'/test/',
+            'redirect_url':'/test/#le-' + block_id,
             'action':action,
         })
 

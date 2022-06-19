@@ -19,7 +19,7 @@ INSTALLED_APPS = [
     'wagtail.snippets',
     'wagtail.documents',
     'wagtail.images',
-    'wagtail.search',
+    #'wagtail.search', # produces deprecation warnings
     'wagtail.admin',
     'wagtail.core',
 
@@ -74,3 +74,5 @@ ROOT_URLCONF = 'tests.urls'
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+WAGTAILADMIN_BASE_URL = "https://example.com/"

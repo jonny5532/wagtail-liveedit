@@ -111,6 +111,10 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
         self.xpath("//input[@name='password']").send_keys('password')
         self.xpath("//input[@name='password']").submit()
 
+    def tearDown(self):
+        self.driver.quit()
+        super(FrontendTest, self).tearDown()
+
     def sel(self, sel):
         return self.driver.find_element_by_css_selector(sel)
 
