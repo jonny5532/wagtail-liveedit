@@ -214,7 +214,16 @@ def append_block_view(request):
                     #insert after this block
                     for j, added in enumerate(val):
                         parent_value.insert(i+1+j, added)
+
+                        # The above insert call leaves the _raw_data entry as None,
+                        # which will cause search indexing to error - Wagtail probably
+                        # isn't expecting us to meddle with StreamValues like this.
+                        #
+                        # Thus we also need to populate the _raw_data entry manually.
+
+                        parent_value._raw_data[i+1+j] = added.get_prep_value()
                     break
+
             save()
 
             return ReloadResponse()
