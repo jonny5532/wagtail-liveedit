@@ -11,6 +11,7 @@ from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
@@ -116,10 +117,10 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
         super(FrontendTest, self).tearDown()
 
     def sel(self, sel):
-        return self.driver.find_element_by_css_selector(sel)
+        return self.driver.find_element(By.CSS_SELECTOR, sel)
 
     def xpath(self, sel):
-        return self.driver.find_element_by_xpath(sel)
+        return self.driver.find_element(By.XPATH, sel)
 
     def hover(self, el):
         ActionChains(self.driver).move_to_element(el).perform()
@@ -132,7 +133,7 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
 
         time.sleep(1) #wait for editor to load
 
-        self.driver.switch_to.frame(self.driver.find_elements_by_tag_name("iframe")[0])
+        self.driver.switch_to.frame(self.driver.find_elements(By.TAG_NAME, "iframe")[0])
 
         h2 = self.sel('h2')
         h2.click()
@@ -146,14 +147,3 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
 
         h2_contents = TestPage.objects.get(pk=self.test_page.id).body.raw_data[0]['value']['body']
         assert 'extra_header_text' in h2_contents
-
-
-        #self.driver.switch_to.frame(0)
-
-        #h2 = self.sel('h2')     
-
-        #self.driver.save_screenshot('/tmp/ss.png')
-        #time.sleep(300)
-
-        #self.driver.get(self.live_server_url + '/static/js/liveedit.js')
-        #print(self.driver.page_source)

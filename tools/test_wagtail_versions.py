@@ -15,7 +15,7 @@ subprocess.run([
         "-e", "START_XVFB=false",
         "-e", "SE_NODE_MAX_SESSIONS=8",
         "-e", "SE_NODE_OVERRIDE_MAX_SESSIONS=true",
-        "selenium/standalone-chrome:4.0.0-rc-1-prerelease-20210713"
+        "selenium/standalone-chrome:4.4"
 ])
 selenium_ip = subprocess.check_output([
     "docker", "inspect", 

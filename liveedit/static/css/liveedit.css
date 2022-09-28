@@ -20,6 +20,7 @@
     font-weight: bold;
     cursor: pointer;
     padding: 1px 4px 0;
+    width: auto;
 }
 .liveedit-bar button:hover { background: rgb(0, 103, 106); }
 

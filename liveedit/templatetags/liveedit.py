@@ -7,7 +7,13 @@ from django.utils.html import format_html
 from django.utils.module_loading import import_string
 
 from wagtail.admin.views.pages.preview import PreviewOnEdit
-from wagtail.core.models import Page, PageRevision
+from wagtail.core.models import Page
+
+try:
+    # Wagtail >= 4.0
+    from wagtail.core.models import Revision as PageRevision
+except:
+    from wagtail.core.models import PageRevision
 
 import json
 
@@ -19,13 +25,22 @@ def as_page_object(self, *args, **kwargs):
     return page
 PageRevision.as_page_object = as_page_object
 
-# monkey-patch PreviewOnEdit.get_page so we can tell if we're looking at a unsaved preview
-original_get_page = PreviewOnEdit.get_page
-def get_page(self, *args, **kwargs):
-    page = original_get_page(self, *args, **kwargs)
-    page._live_edit_is_preview = True
-    return page
-PreviewOnEdit.get_page = get_page
+if hasattr(PreviewOnEdit, 'get_object'): # Wagtail >= 4.0
+    # monkey-patch PreviewOnEdit.get_object so we can tell if we're looking at a unsaved preview
+    original_get_object = PreviewOnEdit.get_object
+    def get_object(self, *args, **kwargs):
+        page = original_get_object(self, *args, **kwargs)
+        page._live_edit_is_preview = True
+        return page
+    PreviewOnEdit.get_object = get_object
+else:
+    # monkey-patch PreviewOnEdit.get_page so we can tell if we're looking at a unsaved preview
+    original_get_page = PreviewOnEdit.get_page
+    def get_page(self, *args, **kwargs):
+        page = original_get_page(self, *args, **kwargs)
+        page._live_edit_is_preview = True
+        return page
+    PreviewOnEdit.get_page = get_page
 
 register = template.Library()
 
@@ -59,6 +74,9 @@ def liveedit_js(context):
 @register.simple_tag(takes_context=True)
 def liveedit_attributes(context):
     if 'liveedit_data' not in context:
+        return ''
+
+    if not context['liveedit_data'].get('id'):
         return ''
 
     return format_html('data-liveedit="{}"', 

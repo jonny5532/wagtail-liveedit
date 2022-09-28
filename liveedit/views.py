@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
@@ -105,10 +106,17 @@ def render_edit_panel(request, d):
     script_tags = mark_safe("\n".join(re.findall('<script[^>]*>.*?</script>', admin_base, re.DOTALL)))
     stylesheet_tags = mark_safe("\n".join(re.findall('<link rel="stylesheet"[^>]+/?>', admin_base, re.DOTALL)))
 
+    try:
+        editor_css = mark_safe(render_to_string("wagtailadmin/pages/_editor_css.html", request=request))
+    except TemplateDoesNotExist as e:
+        # Wagtail >= 4.0
+        editor_css = ""
+
     ret = render(request, "liveedit/edit_panel.html", {
         **d,
-        'script_tags':script_tags,
-        'stylesheet_tags':stylesheet_tags,
+        'script_tags': script_tags,
+        'stylesheet_tags': stylesheet_tags,
+        'editor_css': editor_css
     })
     ret['X-Frame-Options'] = 'SAMEORIGIN'
     return ret
