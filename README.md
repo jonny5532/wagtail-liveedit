@@ -9,6 +9,7 @@ Allow StreamField blocks to be edited via your Wagtail site's frontend.
 ## Requirements
 
 Wagtail 2.13+
+Python 3.8+
 
 ## Installation
 

@@ -33,8 +33,7 @@ def run_tests(wagtail_version):
             "..",
     ], capture_output=True, env={'WAGTAIL_VERSION': wagtail_version})
     
-    if b.returncode!=0:
-        raise "erk"
+    assert b.returncode==0, "Unable to build container: " + b.stderr.decode('ascii', errors="ignore").strip()
 
     image = b.stdout.decode('ascii').strip()
 
