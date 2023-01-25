@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import os
 import requests
 import subprocess
+import sys
 
 os.chdir(os.path.dirname(__file__))
 
@@ -22,6 +23,7 @@ selenium_ip = subprocess.check_output([
         "--format", "{{ .NetworkSettings.IPAddress }}", 
         "selenium-chrome"
 ], encoding='utf-8').strip()
+assert selenium_ip, "Selenium container not found!"
 
 def run_tests(wagtail_version):
     b = subprocess.run([
@@ -53,9 +55,11 @@ def run_tests(wagtail_version):
 
 
 root = ET.fromstring(requests.get("https://pypi.org/rss/project/wagtail/releases.xml").text)
+versions = [el.text for el in root.findall('.//item/title')]
 
-for el in list(root.findall('.//item/title'))[:10]:
-    version = el.text
+number_to_test = int(sys.argv[1]) if len(sys.argv)>1 else 10
 
+for version in versions[:number_to_test]:
     print("Testing version", version)
     run_tests(version)
+

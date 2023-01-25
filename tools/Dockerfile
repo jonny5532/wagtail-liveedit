@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.11-slim
 
 RUN pip install Django Pillow Willow pytz selenium
 

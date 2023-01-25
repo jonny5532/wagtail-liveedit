@@ -11,15 +11,27 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 from wagtail.contrib.modeladmin.helpers import PermissionHelper
-from wagtail.core.blocks import BlockWidget
-from wagtail.core.blocks.stream_block import StreamValue
-from wagtail.core.models import Page
 
-import collections
+import wagtail
+if wagtail.VERSION >= (3,):
+    from wagtail.blocks import BlockWidget
+    from wagtail.models import Page
+    from wagtail.blocks.stream_block import StreamValue
+else:
+    from wagtail.core.blocks import BlockWidget
+    from wagtail.core.models import Page
+    from wagtail.core.blocks.stream_block import StreamValue
+
+from collections.abc import Sequence
 import json
 import re
 from urllib.parse import urlencode, urlparse
 
+def islist(v):
+    return isinstance(v, Sequence)
+
+def isdict(v):
+    return isinstance(v, dict)
 
 def _find_block(stream_value, raw_data, block_id):
     for i in range(len(raw_data)):
@@ -29,15 +41,15 @@ def _find_block(stream_value, raw_data, block_id):
             return stream_value[i].block, stream_value[i].value, set_value, stream_value
 
         # is this a streamblock/listblock?
-        if isinstance(raw_data[i]['value'], collections.Sequence) and len(raw_data[i]['value']) and hasattr(raw_data[i]['value'][0], 'get') and raw_data[i]['value'][0].get('id'):
+        if islist(raw_data[i]['value']) and len(raw_data[i]['value']) and hasattr(raw_data[i]['value'][0], 'get') and raw_data[i]['value'][0].get('id'):
             rb, rv, rsv, rp = _find_block(stream_value[i].value, raw_data[i]['value'], block_id)
             if rb:
                 return rb, rv, rsv, rp
 
         #check structblock field values for any potential block lists
-        if isinstance(raw_data[i]['value'], dict):
+        if isdict(raw_data[i]['value']):
             for k, v in raw_data[i]['value'].items():
-                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                if islist(v) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
                     rb, rv, rsv, rp = _find_block(stream_value[i].value[k], v, block_id)
                     if rb:
                         return rb, rv, rsv, rp
@@ -61,17 +73,17 @@ def modify_block(action, blocks, block_id):
             return True #did the move
 
         #is this a list?
-        if isinstance(blocks[i]['value'], collections.Sequence):
+        if islist(blocks[i]['value']):
             for v in blocks[i]['value']:
-                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                if islist(v) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
                     if modify_block(action, v, block_id):
                         #if block was moved, stop looking
                         return True
 
         #search through all fields for any potential block lists
-        if isinstance(blocks[i]['value'], dict):
+        if isdict(blocks[i]['value']):
             for v in blocks[i]['value'].values():
-                if isinstance(v, collections.Sequence) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
+                if islist(v) and len(v) and hasattr(v[0], 'get') and v[0].get('id'):
                     if modify_block(action, v, block_id):
                         #if block was moved, stop looking
                         return True

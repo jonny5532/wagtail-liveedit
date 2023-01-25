@@ -23,20 +23,7 @@ class MockRequest:
         self.user = user
 
 class BackendTestCase(WagtailPageTests, WagtailTestUtils):
-    # @classmethod
-    # def setUpClass(cls):
-    #     with connection.schema_editor() as schema_editor:
-    #         schema_editor.create_model(TestPage)
-    #         ContentType.objects.get_for_model(TestPage)
-    #     super().setUpClass()
-
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super().tearDownClass()
-    #     with connection.schema_editor() as editor:
-    #         editor.delete_model(TestPage)
-    #     connection.close()
-
+ 
     def setUp(self):
         super(BackendTestCase, self).setUp()
 
