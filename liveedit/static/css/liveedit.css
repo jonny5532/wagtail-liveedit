@@ -12,6 +12,7 @@
 .liveedit-bar button {
     vertical-align: top;
     border: 0;
+    border-radius: 0;
     background: rgb(0, 125, 126);
     color: #ffffff;
     text-transform: uppercase;
