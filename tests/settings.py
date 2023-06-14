@@ -19,7 +19,6 @@ INSTALLED_APPS = [
     'wagtail.snippets',
     'wagtail.documents',
     'wagtail.images',
-    #'wagtail.search', # produces deprecation warnings
     'wagtail.admin',
     'wagtail.core',
 

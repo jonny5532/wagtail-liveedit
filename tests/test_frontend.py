@@ -6,13 +6,17 @@ from django.db import connections, transaction
 from django.test import LiveServerTestCase
 from django.test.testcases import LiveServerThread, QuietWSGIRequestHandler
 
-from wagtail.core.models import Page
-from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
+try:
+    from wagtail.models import Page
+    from wagtail.test.utils import WagtailPageTests, WagtailTestUtils
+except ImportError:
+    # Wagtail <5
+    from wagtail.core.models import Page
+    from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy, ProxyType
@@ -53,21 +57,15 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
     def setUp(self):
         super(FrontendTest, self).setUp()
 
-        # user = get_user_model().objects.create(username='testuser', is_staff=True)
-        # user.set_password('testpassword')
-        # user.save()
-
         self.live_server_url = 'http://%s:%d'%(local_ip, self.port)
 
-        opts = Options()
+        opts = webdriver.ChromeOptions()
         opts.headless = True
         opts.add_argument('--disable-web-security') # avoid CORS problems
         opts.add_argument('--disable-site-isolation-trials')
         self.driver = webdriver.Remote(
-            command_executor='http://%s:4444/wd/hub'%os.getenv('SELENIUM_HOST'),
-            desired_capabilities=DesiredCapabilities.CHROME,
+            command_executor='http://%s:4444'%os.getenv('SELENIUM_HOST'),
             options=opts,
-            #proxy=proxy
         )
         self.driver.set_window_size(1280, 800)
 

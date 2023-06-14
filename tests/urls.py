@@ -2,7 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 
-from wagtail.core import urls as wagtail_urls
+try:
+    from wagtail import urls as wagtail_urls
+except ImportError:
+    # Wagtail <5
+    from wagtail.core import urls as wagtail_urls
 
 from .views import page_view
 

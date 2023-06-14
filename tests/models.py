@@ -1,12 +1,14 @@
-from wagtail.core import blocks
-from wagtail.core.fields import StreamField
-from wagtail.core.models import Page
+try:
+    from wagtail import blocks
+    from wagtail.fields import StreamField
+    from wagtail.models import Page
+except ImportError:
+    # Wagtail <5
+    from wagtail.core import blocks
+    from wagtail.core.fields import StreamField
+    from wagtail.core.models import Page
 
 class TestPage(Page):
-    #class Meta:
-        #app_label = 'tests'
-        #managed = False
-
     template = 'page.html'
 
     body = StreamField([
@@ -30,5 +32,5 @@ class TestPage(Page):
             ])),
         ])),
 
-    ], null=True, blank=True)
+    ], use_json_field=True, null=True, blank=True)
 

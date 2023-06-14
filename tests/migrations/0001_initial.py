@@ -2,8 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import wagtail.core.blocks
-import wagtail.core.fields
+
+try:
+    import wagtail.blocks as blocks
+    import wagtail.fields as fields
+except ImportError:
+    # Wagtail <5
+    import wagtail.core.blocks as blocks
+    import wagtail.core.fields as fields
 
 
 class Migration(migrations.Migration):
@@ -19,7 +25,7 @@ class Migration(migrations.Migration):
             name='TestPage',
             fields=[
                 ('page_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='wagtailcore.page')),
-                ('body', wagtail.core.fields.StreamField([('text', wagtail.core.blocks.StructBlock([('body', wagtail.core.blocks.RichTextBlock(required=False))], template='text_block.html')), ('section', wagtail.core.blocks.StreamBlock([('text', wagtail.core.blocks.StructBlock([('body', wagtail.core.blocks.RichTextBlock(required=False))], template='text_block.html'))])), ('list', wagtail.core.blocks.StructBlock([('title', wagtail.core.blocks.TextBlock(required=False)), ('items', wagtail.core.blocks.StreamBlock([('item', wagtail.core.blocks.StructBlock([('body', wagtail.core.blocks.RichTextBlock(required=False))], template='text_block.html'))]))]))], blank=True, null=True)),
+                ('body', fields.StreamField([('text', blocks.StructBlock([('body', blocks.RichTextBlock(required=False))], template='text_block.html')), ('section', blocks.StreamBlock([('text', blocks.StructBlock([('body', blocks.RichTextBlock(required=False))], template='text_block.html'))])), ('list', blocks.StructBlock([('title', blocks.TextBlock(required=False)), ('items', blocks.StreamBlock([('item', blocks.StructBlock([('body', blocks.RichTextBlock(required=False))], template='text_block.html'))]))]))], blank=True, null=True)),
             ],
             bases=('wagtailcore.page',),
         ),

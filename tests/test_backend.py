@@ -4,10 +4,21 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from wagtail.core.models import Page
-from wagtail.core.rich_text import RichText
+try:
+    from wagtail.models import Page
+    from wagtail.rich_text import RichText
+except ImportError:
+    # Wagtail <5
+    from wagtail.core.models import Page
+    from wagtail.core.rich_text import RichText
+
 from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
-from wagtail.tests.utils.form_data import nested_form_data, streamfield
+try:
+    from wagtail.test.utils.form_data import nested_form_data, streamfield
+except ImportError:
+    # Wagtail <5
+    from wagtail.tests.utils.form_data import nested_form_data, streamfield
+
 
 from html.parser import HTMLParser
 import json

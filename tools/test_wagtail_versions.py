@@ -10,20 +10,21 @@ os.chdir(os.path.dirname(__file__))
 
 subprocess.run([
     "docker", "run", "-d",
-        "--name=selenium-chrome",
+        "--name=selenium-chrome-4.10.0",
         "--restart=unless-stopped",
         "--shm-size=2g",
         "-e", "START_XVFB=false",
         "-e", "SE_NODE_MAX_SESSIONS=8",
         "-e", "SE_NODE_OVERRIDE_MAX_SESSIONS=true",
-        "selenium/standalone-chrome:4.4"
+        "selenium/standalone-chrome:4.10.0"
 ])
 selenium_ip = subprocess.check_output([
     "docker", "inspect", 
         "--format", "{{ .NetworkSettings.IPAddress }}", 
-        "selenium-chrome"
+        "selenium-chrome-4.10.0"
 ], encoding='utf-8').strip()
 assert selenium_ip, "Selenium container not found!"
+
 
 def run_tests(wagtail_version):
     b = subprocess.run([
@@ -43,14 +44,6 @@ def run_tests(wagtail_version):
             "-e", "SELENIUM_HOST=" + selenium_ip,
             image,
     ], capture_output=False)
-
-    #print(r.returncode, r.returncode, r.stdout, r.stderr)
-    #print(r.stdout.decode('ascii'))
-
-
-
-
-
 
 
 root = ET.fromstring(requests.get("https://pypi.org/rss/project/wagtail/releases.xml").text)
