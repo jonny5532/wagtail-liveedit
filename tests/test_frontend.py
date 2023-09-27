@@ -35,7 +35,7 @@ local_ip = socket.gethostbyname(hostname)
 class LiveServerSingleThread(LiveServerThread):
     """Runs a single threaded server rather than multi threaded. Reverts https://github.com/django/django/pull/7832"""
 
-    def _create_server(self):
+    def _create_server(self, *args, **kwargs):
         """
         the keep-alive fixes introduced in Django 2.1.4 (934acf1126995f6e6ccba5947ec8f7561633c27f)
         cause problems when serving the static files in a stream.
@@ -132,6 +132,9 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
         time.sleep(1) #wait for editor to load
 
         self.driver.switch_to.frame(self.driver.find_elements(By.TAG_NAME, "iframe")[0])
+
+        self.driver.save_screenshot("/tmp/out.png")
+        #print(self.driver.page_source)
 
         h2 = self.sel('h2')
         h2.click()

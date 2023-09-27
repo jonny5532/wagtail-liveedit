@@ -13,14 +13,14 @@ from django.views.decorators.csrf import csrf_exempt
 from wagtail.contrib.modeladmin.helpers import PermissionHelper
 
 import wagtail
-if wagtail.VERSION >= (3,):
-    from wagtail.blocks import BlockWidget
-    from wagtail.models import Page
-    from wagtail.blocks.stream_block import StreamValue
-else:
+if wagtail.VERSION < (3,):
     from wagtail.core.blocks import BlockWidget
     from wagtail.core.models import Page
     from wagtail.core.blocks.stream_block import StreamValue
+else:
+    from wagtail.blocks import BlockWidget
+    from wagtail.models import Page
+    from wagtail.blocks.stream_block import StreamValue
 
 from collections.abc import Sequence
 import json
@@ -35,6 +35,7 @@ def isdict(v):
 
 def _find_block(stream_value, raw_data, block_id):
     for i in range(len(raw_data)):
+        # have we found the block we're looking for?
         if raw_data[i]['id']==block_id:
             def set_value(val):
                 stream_value[i].value = val
@@ -42,7 +43,9 @@ def _find_block(stream_value, raw_data, block_id):
 
         # is this a streamblock/listblock?
         if islist(raw_data[i]['value']) and len(raw_data[i]['value']) and hasattr(raw_data[i]['value'][0], 'get') and raw_data[i]['value'][0].get('id'):
-            rb, rv, rsv, rp = _find_block(stream_value[i].value, raw_data[i]['value'], block_id)
+            # stream_value[i] may be a StreamValue or a StreamValue.StreamChild
+            value = stream_value[i].value if isinstance(stream_value[i], StreamValue.StreamChild) else stream_value[i]
+            rb, rv, rsv, rp = _find_block(value, raw_data[i]['value'], block_id)
             if rb:
                 return rb, rv, rsv, rp
 
@@ -59,7 +62,11 @@ def _find_block(stream_value, raw_data, block_id):
 def find_block(stream_value, block_id):
     #returns Block, StreamValue.StreamChild, setter function to update value, parent StreamValue
 
-    return _find_block(stream_value, stream_value.raw_data, block_id)
+    rb, rv, rsv, rp = _find_block(stream_value, stream_value.raw_data, block_id)
+    if rb is None:
+        raise Exception("Couldn't find block %s in %s"%(block_id, stream_value))
+        
+    return rb, rv, rsv, rp
 
 def modify_block(action, blocks, block_id):
     for i in range(len(blocks)):
@@ -118,11 +125,9 @@ def render_edit_panel(request, d):
     script_tags = mark_safe("\n".join(re.findall('<script[^>]*>.*?</script>', admin_base, re.DOTALL)))
     stylesheet_tags = mark_safe("\n".join(re.findall('<link rel="stylesheet"[^>]+/?>', admin_base, re.DOTALL)))
 
-    try:
+    editor_css = ""
+    if wagtail.VERSION < (4,):
         editor_css = mark_safe(render_to_string("wagtailadmin/pages/_editor_css.html", request=request))
-    except TemplateDoesNotExist as e:
-        # Wagtail >= 4.0
-        editor_css = ""
 
     ret = render(request, "liveedit/edit_panel.html", {
         **d,
@@ -146,8 +151,18 @@ class ErrorWrapper:
     def __init__(self, err):
         self.err = err
     def as_data(self):
-        return self.err
+        if wagtail.VERSION < (5,):
+            return self.err
+        return [self.err]
 
+def wrap_error(err):
+    if wagtail.VERSION < (5,):
+        return ErrorWrapper(err)
+
+    if err is None:
+        return None
+
+    return ErrorWrapper(err)
 
 @csrf_exempt
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
@@ -178,7 +193,7 @@ def edit_block_view(request):
 
     block, block_value, set_value, parent = find_block(value, request.GET['id'])
 
-    errors = ErrorWrapper(None)
+    errors = wrap_error(None)
     if request.method=="POST" and request.POST.get('delete'):
         for i, block in enumerate(parent):
             if block_value==block.value:
@@ -192,21 +207,18 @@ def edit_block_view(request):
             val = block.clean(val)
 
             set_value(val)
-            #print('val is', repr(val))
-            #print('block_value is', repr(block_value))
-
             save()
 
             return ReloadResponse(request.GET['id'])
 
         except forms.ValidationError as e:
-            errors = ErrorWrapper(e)
+            errors = wrap_error(e)
             block_value = val
 
     bw = BlockWidget(block)
 
     return render_edit_panel(request, {
-        'form_html': bw.render_with_errors('block_edit_form', block_value, errors=errors), #block.render_form(block_value, prefix="block_edit_form", ),
+        'form_html': bw.render_with_errors('block_edit_form', block_value, errors=errors),
         'form_media': bw.media,
     })
 
@@ -223,7 +235,7 @@ def append_block_view(request):
     parent_block = parent_value.stream_block
     blank_value = StreamValue(parent_value.stream_block, [])
 
-    errors = None
+    errors = wrap_error(None)
     if request.method=="POST":
         val = parent_block.value_from_datadict(request.POST, request.FILES, 'block_edit_form')
         try:
@@ -248,7 +260,7 @@ def append_block_view(request):
 
             return ReloadResponse()
         except forms.ValidationError as e:
-            errors = ErrorList([e])
+            errors = wrap_error(e)
             blank_value = val
 
     bw = BlockWidget(parent_block)

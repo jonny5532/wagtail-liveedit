@@ -8,8 +8,21 @@ Allow StreamField blocks to be edited via your Wagtail site's frontend.
 
 ## Requirements
 
-Wagtail 2.13+
+Wagtail (see compatibility matrix below)
 Python 3.8+
+
+## Compatibility matrix
+
+Wagtail version | Passing tests?
+----------------|---------------
+4.1.7           | :heavy_check_mark:
+5.1.2           | :heavy_check_mark:
+5.0.3           | :heavy_check_mark:
+4.2.4           | :heavy_check_mark:
+4.0.4           | :heavy_check_mark:
+2.16.3          | :heavy_check_mark:
+2.15.6          | :x:
+3.0.3           | :heavy_check_mark:
 
 ## Installation
 

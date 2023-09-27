@@ -148,6 +148,7 @@
 
         el.insertAdjacentElement('afterbegin', bar);
         el.setAttribute('data-liveedit-active', true);
+        document.documentElement.setAttribute('data-liveedit-active', true);
     });
 
     window.addEventListener("message", function(event) {

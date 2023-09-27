@@ -6,6 +6,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+import wagtail
+
 INSTALLED_APPS = [
     'tests',
     'liveedit',
@@ -20,7 +22,7 @@ INSTALLED_APPS = [
     'wagtail.documents',
     'wagtail.images',
     'wagtail.admin',
-    'wagtail.core',
+    'wagtail' if wagtail.VERSION >= (3,) else 'wagtail.core',
 
     'modelcluster',
     'taggit',

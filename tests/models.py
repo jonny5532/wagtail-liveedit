@@ -1,3 +1,4 @@
+import wagtail
 try:
     from wagtail import blocks
     from wagtail.fields import StreamField
@@ -7,6 +8,8 @@ except ImportError:
     from wagtail.core import blocks
     from wagtail.core.fields import StreamField
     from wagtail.core.models import Page
+
+STREAMFIELD_ARGS = dict(use_json_field=True) if wagtail.VERSION >= (3,) else {}
 
 class TestPage(Page):
     template = 'page.html'
@@ -32,5 +35,20 @@ class TestPage(Page):
             ])),
         ])),
 
-    ], use_json_field=True, null=True, blank=True)
+        ('columns', blocks.StructBlock([
+            ('columns', blocks.ListBlock(
+                blocks.StreamBlock([
+                    ('text', blocks.StructBlock([
+                        ('body', blocks.RichTextBlock(required=False)),
+                    ])),
+                ], template="text_block.html"),
+                min_num=1, max_num=3,
+            )),
+        ])),
+
+        ('required', blocks.StructBlock([
+            ('text', blocks.TextBlock(required=True)),
+        ])),
+
+    ], **STREAMFIELD_ARGS, null=True, blank=True)
 

@@ -7,6 +7,7 @@
     z-index: 99;
     display: none;
     line-height: 11px;
+    align-self: start;
 }
 
 .liveedit-bar button {
@@ -27,6 +28,9 @@
 
 [data-liveedit-active]:hover > .liveedit-bar { display: block; }
 
+/* Nested edit bars should sit under parent ones */
+[data-liveedit-active] [data-liveedit-active] .liveedit-bar { z-index: 98; }
+[data-liveedit-active] [data-liveedit-active] [data-liveedit-active] .liveedit-bar { z-index: 97; }
 
 .liveedit-panel { 
     background: #fff;

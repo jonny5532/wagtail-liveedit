@@ -2,7 +2,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import connection, transaction
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.test import RequestFactory
+try:
+    from django.test import RequestFactory
+except ImportError:
+    # Wagtail <3
+    from django.tests import RequestFactory
 
 try:
     from wagtail.models import Page
@@ -12,11 +16,12 @@ except ImportError:
     from wagtail.core.models import Page
     from wagtail.core.rich_text import RichText
 
-from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
 try:
+    from wagtail.test.utils import WagtailPageTests, WagtailTestUtils
     from wagtail.test.utils.form_data import nested_form_data, streamfield
 except ImportError:
     # Wagtail <5
+    from wagtail.tests.utils import WagtailPageTests, WagtailTestUtils
     from wagtail.tests.utils.form_data import nested_form_data, streamfield
 
 
@@ -68,6 +73,23 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
                     }}
                 ],
             }},
+
+            {'type': 'required', 'id':str(uuid.uuid4()), 'value': {
+                'text': 'This is text',
+            }},
+
+            {'type': 'columns', 'id':str(uuid.uuid4()), 'value': {
+                'columns': [
+                    {'type': 'item', 'id':str(uuid.uuid4()), 'value': [
+                        {'type': 'text', 'id':str(uuid.uuid4()), 'value': {
+                            'body': "<p>A text inside a column.</p>"
+                        }},
+                        {'type': 'text', 'id':str(uuid.uuid4()), 'value': {
+                            'body': "<p>A second text inside a column.</p>"
+                        }},
+                    ]}
+                ],
+            }},
         ])
         self.root_page.add_child(instance=self.test_page)
         self.content_type = ContentType.objects.get_for_model(TestPage)
@@ -98,10 +120,10 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
         parser.feed(ret)
         parser.check_tags()
 
-    def test_block_edit_form(self):
+    def check_block_form(self, path):
         self.login(user=self.user)
 
-        ret = self.client.get('/__liveedit__/edit-block/', {
+        ret = self.client.get(path, {
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
@@ -124,6 +146,25 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
         parser.feed(ret.content.decode('utf-8'))
         parser.check_tags()
 
+    def test_block_edit_form(self):
+        self.check_block_form('/__liveedit__/edit-block/')
+
+    def test_block_append_form(self):
+        self.check_block_form('/__liveedit__/append-block/')
+
+    def test_block_edit_nested_form(self):
+        """
+        Attempt to edit a block inside a streamblock in a listblock in a streamblock.
+        """
+        self.login(user=self.user)
+
+        ret = self.client.get('/__liveedit__/edit-block/', {
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[4].value['columns'][0][0].id,
+        })
+
     def test_block_edit(self):
         self.login(user=self.user)
 
@@ -140,8 +181,38 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             })
         })
 
-        #print(str(TestPage.objects.get(pk=self.test_page.id).body))
         assert '<p>This is the replacement rich text.</p>' in str(TestPage.objects.get(pk=self.test_page.id).body)
+
+    def check_block_errors(self, path, data):
+        self.login(user=self.user)
+
+        ret = self.client.post(path + '?' + urllib.parse.urlencode({
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[3].id,
+        }), data)
+
+        self.assertIn(b"This field is required.", ret.content)
+
+    def test_block_edit_errors(self):
+        return self.check_block_errors('/__liveedit__/edit-block/', {
+            'block_edit_form-body':json.dumps({
+                "blocks":[{
+                    "text":"",
+                }],
+            }),
+        })
+
+    def test_block_append_errors(self):
+        return self.check_block_errors('/__liveedit__/append-block/', {
+            'block_edit_form-count': '1',
+            'block_edit_form-0-deleted': '',
+            'block_edit_form-0-order': '0',
+            'block_edit_form-0-type': 'required',
+            'block_edit_form-0-id': str(uuid.uuid4()),
+            'block_edit_form-0-value-text': '',
+        })
 
     def _do_action(self, block_id, action):
         self.login(user=self.user)

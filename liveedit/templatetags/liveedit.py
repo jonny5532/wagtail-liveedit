@@ -7,25 +7,44 @@ from django.utils.html import format_html
 from django.utils.module_loading import import_string
 
 from wagtail.admin.views.pages.preview import PreviewOnEdit
-from wagtail.core.models import Page
+
+try:
+    # Wagtail >= 5.0
+    from wagtail.models import Page
+except:
+    from wagtail.core.models import Page
 
 try:
     # Wagtail >= 4.0
-    from wagtail.core.models import Revision as PageRevision
+    from wagtail.models import Revision as PageRevision
 except:
     from wagtail.core.models import PageRevision
 
 import json
 
-# monkey-patch PageRevision.as_page_object to store revision id on pages
-original_as_page_object = PageRevision.as_page_object
-def as_page_object(self, *args, **kwargs):
-    page = original_as_page_object(self, *args, **kwargs)
-    page._live_edit_revision_id = self.id
-    return page
-PageRevision.as_page_object = as_page_object
+if hasattr(PageRevision, "as_object"):
+    # Wagtail >= 5.0
 
-if hasattr(PreviewOnEdit, 'get_object'): # Wagtail >= 4.0
+    # monkey-patch PageRevision.as_object to store revision id on pages
+    original_as_object = PageRevision.as_object
+    def as_object(self, *args, **kwargs):
+        page = original_as_object(self, *args, **kwargs)
+        page._live_edit_revision_id = self.id
+        return page
+    PageRevision.as_object = as_object
+
+else:
+    # monkey-patch PageRevision.as_page_object to store revision id on pages
+    original_as_page_object = PageRevision.as_page_object
+    def as_page_object(self, *args, **kwargs):
+        page = original_as_page_object(self, *args, **kwargs)
+        page._live_edit_revision_id = self.id
+        return page
+    PageRevision.as_page_object = as_page_object
+
+if hasattr(PreviewOnEdit, 'get_object'): 
+    # Wagtail >= 4.0
+
     # monkey-patch PreviewOnEdit.get_object so we can tell if we're looking at a unsaved preview
     original_get_object = PreviewOnEdit.get_object
     def get_object(self, *args, **kwargs):
