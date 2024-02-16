@@ -14,4 +14,5 @@ urlpatterns = [
     path('__liveedit__/', include('liveedit.urls')),
     path('admin/', include('wagtail.admin.urls')),
     path('page/', page_view),
+    path("pages/", include(wagtail_urls)),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

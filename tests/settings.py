@@ -38,7 +38,7 @@ INSTALLED_APPS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+        'NAME': os.getenv('DATABASE_FILE', ':memory:'),
     }
 }
 
@@ -75,5 +75,7 @@ ROOT_URLCONF = 'tests.urls'
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+WAGTAIL_SITE_NAME = "Example"
 
 WAGTAILADMIN_BASE_URL = "https://example.com/"

@@ -10,8 +10,6 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
-from wagtail.contrib.modeladmin.helpers import PermissionHelper
-
 import wagtail
 if wagtail.VERSION < (3,):
     from wagtail.core.blocks import BlockWidget
@@ -116,7 +114,7 @@ def check_can_edit(user, obj):
     if hasattr(obj, 'permissions_for_user'):
         if not obj.permissions_for_user(user).can_edit():
             raise PermissionDenied
-    elif not PermissionHelper(obj).user_can_edit_obj(user, obj):
+    elif not user.has_perm("%s.change" % obj._meta.app_label):
         raise PermissionDenied
 
 def render_edit_panel(request, d):

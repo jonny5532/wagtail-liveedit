@@ -1,4 +1,5 @@
 import wagtail
+from wagtail.admin.panels import FieldPanel
 try:
     from wagtail import blocks
     from wagtail.fields import StreamField
@@ -52,3 +53,6 @@ class TestPage(Page):
 
     ], **STREAMFIELD_ARGS, null=True, blank=True)
 
+    content_panels = Page.content_panels + [
+        FieldPanel("body"),
+    ]
