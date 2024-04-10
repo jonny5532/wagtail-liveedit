@@ -58,7 +58,14 @@ def _find_block(stream_value, raw_data, block_id):
     return None, None, None, None
 
 def find_block(stream_value, block_id):
-    #returns Block, StreamValue.StreamChild, setter function to update value, parent StreamValue
+    """
+    Search through the stream_value to find the block with the given id.
+
+    Recurses into StreamBlock and ListBlock items, and also into StructBlock fields.
+
+    Returns a tuple of (Block, StreamValue.StreamChild, setter function to update value, parent StreamValue)
+
+    """
 
     rb, rv, rsv, rp = _find_block(stream_value, stream_value.raw_data, block_id)
     if rb is None:
@@ -189,16 +196,17 @@ def edit_block_view(request):
     obj, save = get_latest_revision_and_save_function(obj)
     value = getattr(obj, request.GET['object_field'])
 
-    block, block_value, set_value, parent = find_block(value, request.GET['id'])
+    block_id = request.GET['id']
+    block, block_value, set_value, parent = find_block(value, block_id)
 
     errors = wrap_error(None)
     if request.method=="POST" and request.POST.get('delete'):
         for i, block in enumerate(parent):
-            if block_value==block.value:
+            if block.id==block_id:
                 del parent[i]
                 save()
-
                 return ReloadResponse()
+
     elif request.method=="POST":
         val = block.value_from_datadict(request.POST, request.FILES, 'block_edit_form')
         try:
@@ -207,7 +215,7 @@ def edit_block_view(request):
             set_value(val)
             save()
 
-            return ReloadResponse(request.GET['id'])
+            return ReloadResponse(block_id)
 
         except forms.ValidationError as e:
             errors = wrap_error(e)
