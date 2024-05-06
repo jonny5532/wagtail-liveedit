@@ -136,11 +136,16 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
                 if (tag=="div" 
                         and dict(attrs).get('id')=='block_edit_form'
                         and dict(attrs).get('data-block')):
+                    # Wagtail < 6.1
                     self.data_block = json.loads(dict(attrs).get('data-block'))
+                elif (tag=="div" 
+                        and dict(attrs).get('id')=='block_edit_form'
+                        and dict(attrs).get('data-w-block-arguments-value')):
+                    self.data_block = json.loads(dict(attrs).get('data-w-block-arguments-value'))[0]
 
             def check_tags(self):
-                assert isinstance(self.data_block, dict)
-                assert len(self.data_block)
+                assert hasattr(self, 'data_block'), "Block edit form not found."
+                assert self.data_block==[] or (isinstance(self.data_block, dict) and len(self.data_block))
 
         parser = MyHTMLParser()
         parser.feed(ret.content.decode('utf-8'))

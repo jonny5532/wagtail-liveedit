@@ -49,12 +49,16 @@
     background: #007d7e;
     height: 38px;
     padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .liveedit-topbar svg {
+    display: block;
     width: 16px; 
     fill: #ffffff; 
-    margin: 7px 14px 0 0;
+    margin: 0 20px 0 0;
 }
 
 .liveedit-title {
