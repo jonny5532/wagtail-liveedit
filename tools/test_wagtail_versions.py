@@ -70,6 +70,8 @@ for version in versions[:number_to_test]:
     print("Testing version", version)
     results.append((version, run_tests(version)))
 
+results.sort(key=lambda x: tuple(int(i) for i in (x[0]+".0.0").split(".")[:3]), reverse=True)
+
 readme = open("../README.md", "r").read()
 COMPAT_MATRIX_HEADER = 'Wagtail version | Passing tests?\n----------------|---------------\n'
 assert COMPAT_MATRIX_HEADER in readme
