@@ -57,6 +57,9 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             {'type': 'text', 'id':str(uuid.uuid4()), 'value': {
                 'body': "<h2>hello world</h2>"
             }},
+            {'type': 'text', 'id':str(uuid.uuid4()), 'value': {
+                'body': "<p>The first paragraph.</p>"
+            }},
             {'type': 'section', 'id':str(uuid.uuid4()), 'value': [
                 {'type': 'text', 'id':str(uuid.uuid4()), 'value': {
                     'body': "<p>Text inside a section.</p>"
@@ -127,7 +130,7 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
-            'id':self.test_page.body[1].value[0].id,
+            'id':self.test_page.body[2].value[0].id,
         })
 
         parent = self
@@ -167,7 +170,7 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
-            'id':self.test_page.body[4].value['columns'][0][0].id,
+            'id':self.test_page.body[5].value['columns'][0][0].id,
         })
 
     def test_block_edit(self):
@@ -186,7 +189,39 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             })
         })
 
-        assert '<p>This is the replacement rich text.</p>' in str(TestPage.objects.get(pk=self.test_page.id).body)
+        self.assertIn('<p>This is the replacement rich text.</p>', str(TestPage.objects.get(pk=self.test_page.id).body))
+
+    def test_block_edit_draft(self):
+        self.login(user=self.user)
+
+        # Create a draft, which we'll modify
+        draft = self.test_page.save_revision()
+
+        # Update a block on the (draft) page
+        ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[0].id,
+        }), {
+            'block_edit_form-body':json.dumps({
+                "blocks":[{
+                    "text":"This is the replacement rich text.",
+                }],
+            })
+        })
+
+        # Check that the draft is still extant and unpublished
+        self.assertTrue(TestPage.objects.get(pk=self.test_page.id).has_unpublished_changes)
+        # Check that the draft got updated
+        self.assertIn('<p>This is the replacement rich text.</p>', str(TestPage.objects.get(pk=self.test_page.id).get_latest_revision_as_object().body))
+        # Check that the live page is unchanged
+        self.assertNotIn('<p>This is the replacement rich text.</p>', str(TestPage.objects.get(pk=self.test_page.id).body))
+
+        # Publish the draft
+        TestPage.objects.get(pk=self.test_page.id).get_latest_revision().publish()
+        # Check that the live page has updated
+        self.assertIn('<p>This is the replacement rich text.</p>', str(TestPage.objects.get(pk=self.test_page.id).body))
 
     def check_block_errors(self, path, data):
         self.login(user=self.user)
@@ -195,7 +230,7 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
-            'id':self.test_page.body[3].id,
+            'id':self.test_page.body[4].id,
         }), data)
 
         self.assertIn(b"This field is required.", ret.content)
@@ -273,18 +308,18 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
     def test_block_delete_nested(self):
         self.login(user=self.user)
 
-        n = len(self.test_page.body[1].value)
+        n = len(self.test_page.body[2].value)
 
         ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
-            'id':self.test_page.body[1].value[0].id,
+            'id':self.test_page.body[2].value[0].id,
         }), {
             'delete':'1'        
         })
 
         self.assertEqual(
-            len(TestPage.objects.get(pk=self.test_page.id).body[1].value),
+            len(TestPage.objects.get(pk=self.test_page.id).body[2].value),
             n-1
         )

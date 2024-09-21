@@ -90,16 +90,70 @@ def liveedit_js(context):
         static('js/liveedit.js')
     )
 
-@register.simple_tag(takes_context=True)
-def liveedit_attributes(context):
-    if 'liveedit_data' not in context:
-        return ''
+def _is_editing_allowed(object, request):
+    if isinstance(object, Page):
+        perms = object.permissions_for_user(request.user)
+        if not perms.can_edit():
+            return False, None
 
-    if not context['liveedit_data'].get('id'):
+        if object.has_unpublished_changes:
+            # There is a new unpublished version of this page, are we looking at it?
+            cur_rev_id = getattr(object, '_live_edit_revision_id', None)
+            latest_rev_id = object.get_latest_revision().id
+
+            if cur_rev_id!=latest_rev_id:
+                # We're not, so don't allow live editing, but send a link to the latest revision.
+                return False, format_html("<script>window._live_edit_draft_url='{}';</script>",
+                    reverse('wagtailadmin_pages:revisions_view', args=(object.id, latest_rev_id))
+                )
+
+            if getattr(object, '_live_edit_is_preview', False):
+                # We're viewing an unsaved preview, don't allow editing
+                return False, None
+
+        elif getattr(request, 'is_dummy', False):
+            # We are in preview mode, without a unpublished revision, don't allow editing
+            return False, None
+            
+    return True, None
+
+@register.simple_tag(takes_context=True)
+def liveedit_attributes(context, block=None, object=None, field=None):
+    """
+    Output the HTML attributes to enable a block to be live edited.
+
+    Ordinarily, the `block`, `object` and `field` arguments are not necessary
+    since they'll have been provided by the `liveedit_include_block` invocation.
+    However, if you want to include the live editing attributes manually, you
+    can pass them as arguments to this tag.
+    """
+
+    data = {
+        **(context.get('liveedit_data') or {})
+    }
+
+    if block and object and field:
+        request = context.get('request')
+        if not request:
+            return ''
+        
+        editing_allowed, _ = _is_editing_allowed(object, request)
+        if not editing_allowed:
+            return ''
+
+        data.update({
+            'id': block.id,
+            'block_type': block.block_type,
+            'content_type_id': ContentType.objects.get_for_model(object).id,
+            'object_id': object.id,
+            'object_field': field
+        })
+
+    if not data.get('id'):
         return ''
 
     return format_html('data-liveedit="{}"', 
-        json.dumps(context['liveedit_data'])
+        json.dumps(data)
     )
 
 @register.simple_tag(takes_context=True)
@@ -113,11 +167,6 @@ def liveedit_include_block(context, block, object=None, field=None):
     if not is_enabled(request) or not is_authenticated(request):
         return finish()
 
-    if object and isinstance(object, Page):
-        perms = object.permissions_for_user(request.user)
-        if not perms.can_edit():
-            return finish()
-
     data = {
         **(context.get('liveedit_data') or {}), 
         'id':block.id,
@@ -125,25 +174,9 @@ def liveedit_include_block(context, block, object=None, field=None):
     }
 
     if object and field:
-        if isinstance(object, Page):
-            if object.has_unpublished_changes:
-                # There is a new unpublished version of this page, are we looking at it?
-                cur_rev_id = getattr(object, '_live_edit_revision_id', None)
-                latest_rev_id = object.get_latest_revision().id
-
-                if cur_rev_id!=latest_rev_id:
-                    # We're not, so don't allow live editing, but send a link to the latest revision.
-                    return finish() + format_html("<script>window._live_edit_draft_url='{}';</script>",
-                            reverse('wagtailadmin_pages:revisions_view', args=(object.id, latest_rev_id))
-                        )
-
-                if getattr(object, '_live_edit_is_preview', False):
-                    # We're viewing an unsaved preview, don't allow editing
-                    return finish()
-
-            elif getattr(request, 'is_dummy', False):
-                # We are in preview mode, without a unpublished revision, don't allow editing
-                return finish()
+        editing_allowed, extra = _is_editing_allowed(object, request)
+        if not editing_allowed:
+            return finish() + (extra or "")
 
         data.update({
             'content_type_id': ContentType.objects.get_for_model(object).id,
