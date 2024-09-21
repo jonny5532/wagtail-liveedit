@@ -15,9 +15,10 @@ Python 3.8+
 
 Wagtail version | Passing tests?
 ----------------|---------------
-6.1.2           | :heavy_check_mark:
-6.0.5           | :heavy_check_mark:
-5.2.5           | :heavy_check_mark:
+6.2.1           | :heavy_check_mark:
+6.1.3           | :heavy_check_mark:
+6.0.6           | :heavy_check_mark:
+5.2.6           | :heavy_check_mark:
 5.1.3           | :heavy_check_mark:
 5.0.5           | :heavy_check_mark:
 4.2.4           | :heavy_check_mark:
