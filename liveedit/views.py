@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
@@ -100,21 +101,29 @@ def modify_block(action, blocks, block_id):
                         #if block was moved, stop looking
                         return True
 
-def get_latest_revision_and_save_function(obj):
+def get_latest_revision_and_save_function(obj, request):
     """
     For a given model instance, return the latest revision of that model
     instance, as well as a function which saves it, as a tuple.
     """
+
+    # The default behaviour is to update the current live page
     save = obj.save
+
     if isinstance(obj, Page):
         if obj.has_unpublished_changes:
-            # Save over the latest revision, not the published one
-            obj = obj.get_latest_revision_as_page()
+            # Modify the latest draft, not the published one
+            obj = obj.get_latest_revision_as_object()
             
             def save():
+                # Update the existing draft revision
                 rev = obj.get_latest_revision()
-                rev.content_json = obj.to_json()
+                rev.content = obj.serializable_data()
                 rev.save()
+        elif not obj.get_latest_revision() or obj.get_latest_revision().user != request.user or (timezone.now() - obj.get_latest_revision().created_at).total_seconds() >= 3600:
+            # Create and publish a new revision
+            def save():
+                obj.save_revision(user=request.user).publish(user=request.user)
     return obj, save
 
 def check_can_edit(user, obj):
@@ -175,7 +184,7 @@ def action_view(request):
     ct = ContentType.objects.get(pk=request.POST['content_type_id'])
     obj = ct.model_class().objects.get(pk=request.POST['object_id'])
     check_can_edit(request.user, obj)
-    obj, save = get_latest_revision_and_save_function(obj)
+    obj, save = get_latest_revision_and_save_function(obj, request)
     value = getattr(obj, request.POST['object_field'])
 
     block_id = request.POST['id']
@@ -193,7 +202,7 @@ def edit_block_view(request):
     ct = ContentType.objects.get(pk=request.GET['content_type_id'])
     obj = ct.model_class().objects.get(pk=request.GET['object_id'])
     check_can_edit(request.user, obj)
-    obj, save = get_latest_revision_and_save_function(obj)
+    obj, save = get_latest_revision_and_save_function(obj, request)
     value = getattr(obj, request.GET['object_field'])
 
     block_id = request.GET['id']
@@ -233,7 +242,7 @@ def append_block_view(request):
     ct = ContentType.objects.get(pk=request.GET['content_type_id'])
     obj = ct.model_class().objects.get(pk=request.GET['object_id'])
     check_can_edit(request.user, obj)
-    obj, save = get_latest_revision_and_save_function(obj)
+    obj, save = get_latest_revision_and_save_function(obj, request)
     value = getattr(obj, request.GET['object_field'])
 
     _, _, _, parent_value = find_block(value, request.GET['id'])
