@@ -176,7 +176,9 @@ def liveedit_include_block(context, block, object=None, field=None):
     if object and field:
         editing_allowed, extra = _is_editing_allowed(object, request)
         if not editing_allowed:
-            return finish() + (extra or "")
+            if extra:
+                return finish() + extra
+            return finish()
 
         data.update({
             'content_type_id': ContentType.objects.get_for_model(object).id,
