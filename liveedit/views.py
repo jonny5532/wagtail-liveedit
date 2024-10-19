@@ -108,7 +108,9 @@ def get_latest_revision_and_save_function(obj, request):
     """
 
     # The default behaviour is to update the current live page
-    save = obj.save
+    def save():
+        obj.last_published_at = timezone.now()
+        obj.save()
 
     if isinstance(obj, Page):
         if obj.has_unpublished_changes:
