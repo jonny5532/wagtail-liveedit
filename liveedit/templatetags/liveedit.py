@@ -175,6 +175,13 @@ def liveedit_include_block(context, block, object=None, field=None):
     request = context.get('request')
 
     def finish():
+        if not block:
+            # No block to render, so insert a placeholder that can be used to
+            # insert a new block.
+            return format_html(
+                '<div data-liveedit="{}" style="height: 2px"></div>',
+                json.dumps(context['liveedit_data'])
+            )
         return block.render_as_block(context)
 
     if not is_enabled(request) or not is_authenticated(request):
@@ -182,8 +189,10 @@ def liveedit_include_block(context, block, object=None, field=None):
 
     data = {
         **(context.get('liveedit_data') or {}), 
-        'id':block.id,
-        'block_type': block.block_type
+        **({
+            'id':block.id,
+            'block_type': block.block_type
+        } if block else {})
     }
 
     if object and field:
@@ -202,3 +211,13 @@ def liveedit_include_block(context, block, object=None, field=None):
     context['liveedit_data'] = data
     
     return finish()
+
+@register.simple_tag(takes_context=True)
+def liveedit_insert_new(context, object, field):
+    """
+    Insert a placeholder which allows the user to insert a new block into a
+    StreamField. This is useful if a StreamField has no blocks in yet, to allow
+    the user to add one.
+    """
+    
+    return liveedit_include_block(context, None, object, field)

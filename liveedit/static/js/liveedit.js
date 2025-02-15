@@ -44,23 +44,25 @@
             form.submit();
         }
 
-        var btn = document.createElement('button');
-        btn.appendChild(document.createTextNode('🡄'));
-        btn.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            submitAction('move_up', btn);
-        });
-        bar.appendChild(btn);
+        if(data.id) {
+            var btn = document.createElement('button');
+            btn.appendChild(document.createTextNode('🡄'));
+            btn.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                submitAction('move_up', btn);
+            });
+            bar.appendChild(btn);
 
-        var btn = document.createElement('button');
-        btn.appendChild(document.createTextNode('🡆'));
-        btn.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            submitAction('move_down', btn);
-        });
-        bar.appendChild(btn);
+            var btn = document.createElement('button');
+            btn.appendChild(document.createTextNode('🡆'));
+            btn.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                submitAction('move_down', btn);
+            });
+            bar.appendChild(btn);
+        }
 
         function loadEditPanel(url, panel_title) {
             if(liveedit_context.edit_panel) return; //panel already open
@@ -96,20 +98,22 @@
             document.body.appendChild(con);
         }
 
-        btn = document.createElement('button');
-        btn.appendChild(document.createTextNode('Edit'));
-        btn.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            loadEditPanel(
-                '/__liveedit__/edit-block/?id=' + encodeURIComponent(data.id) + 
-                '&content_type_id=' + encodeURIComponent(data.content_type_id) +
-                '&object_id=' + encodeURIComponent(data.object_id) +
-                '&object_field=' + encodeURIComponent(data.object_field),
-                "Edit " + data.block_type.replace(/_/g, ' '),
-            );
-        });
-        bar.appendChild(btn);
+        if(data.id) {
+            btn = document.createElement('button');
+            btn.appendChild(document.createTextNode('Edit'));
+            btn.addEventListener('click', function(ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                loadEditPanel(
+                    '/__liveedit__/edit-block/?id=' + encodeURIComponent(data.id) + 
+                    '&content_type_id=' + encodeURIComponent(data.content_type_id) +
+                    '&object_id=' + encodeURIComponent(data.object_id) +
+                    '&object_field=' + encodeURIComponent(data.object_field),
+                    "Edit " + data.block_type.replace(/_/g, ' '),
+                );
+            });
+            bar.appendChild(btn);
+        }
 
         var btn = document.createElement('button');
         btn.appendChild(document.createTextNode('＋'));
@@ -117,7 +121,7 @@
             ev.preventDefault();
             ev.stopPropagation();
             loadEditPanel(
-                '/__liveedit__/append-block/?id=' + encodeURIComponent(data.id) + 
+                '/__liveedit__/append-block/?id=' + encodeURIComponent(data.id || "") + 
                 '&content_type_id=' + encodeURIComponent(data.content_type_id) +
                 '&object_id=' + encodeURIComponent(data.object_id) +
                 '&object_field=' + encodeURIComponent(data.object_field),

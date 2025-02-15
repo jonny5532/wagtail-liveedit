@@ -123,14 +123,14 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
         parser.feed(ret)
         parser.check_tags()
 
-    def check_block_form(self, path):
+    def check_block_form(self, path, id=None):
         self.login(user=self.user)
 
         ret = self.client.get(path, {
             'content_type_id':self.content_type.id,
             'object_id':self.test_page.id,
             'object_field':'body',
-            'id':self.test_page.body[2].value[0].id,
+            'id':id if id is not None else self.test_page.body[2].value[0].id,
         })
 
         parent = self
@@ -323,3 +323,7 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             len(TestPage.objects.get(pk=self.test_page.id).body[2].value),
             n-1
         )
+
+    def test_block_first_form(self):
+        self.check_block_form('/__liveedit__/append-block/', id="")
+        

@@ -263,6 +263,14 @@ def append_block_view(request):
     value = getattr(obj, request.GET['object_field'], None)
     assert isinstance(value, StreamValue), "Expected a StreamValue, got %r" % value
 
+    block_id = request.GET.get('id')
+    if not block_id:
+        # No existing block, use the top-level StreamValue as the parent.
+        parent_value = value
+    else:
+        # Find the block within the StreamValue and use its parent.
+        _, _, _, parent_value = find_block(value, block_id)
+
     parent_block = parent_value.stream_block
     blank_value = StreamValue(parent_value.stream_block, [])
 
@@ -272,20 +280,25 @@ def append_block_view(request):
         try:
             val = parent_block.clean(val)
 
+            # Default to inserting the new block(s) at the top
+            insert_index = 0
             for i, v in enumerate(parent_value):
-                if v.id==request.GET['id']:
-                    #insert after this block
-                    for j, added in enumerate(val):
-                        parent_value.insert(i+1+j, added)
-
-                        # The above insert call leaves the _raw_data entry as None,
-                        # which will cause search indexing to error - Wagtail probably
-                        # isn't expecting us to meddle with StreamValues like this.
-                        #
-                        # Thus we also need to populate the _raw_data entry manually.
-
-                        parent_value._raw_data[i+1+j] = added.get_prep_value()
+                if block_id and v.id==block_id:
+                    # Insert after this block
+                    insert_index = i+1
                     break
+
+            # Insert the new block(s) into the parent
+            for j, added in enumerate(val):
+                parent_value.insert(insert_index+j, added)
+
+                # The above insert call leaves the _raw_data entry as None,
+                # which will cause search indexing to error - Wagtail probably
+                # isn't expecting us to meddle with StreamValues like this.
+                #
+                # Thus we also need to populate the _raw_data entry manually.
+
+                parent_value._raw_data[insert_index+j] = added.get_prep_value()
 
             save()
 
