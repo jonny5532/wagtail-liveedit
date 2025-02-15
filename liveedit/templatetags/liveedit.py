@@ -161,6 +161,16 @@ def liveedit_attributes(context, block=None, object=None, field=None):
 
 @register.simple_tag(takes_context=True)
 def liveedit_include_block(context, block, object=None, field=None):
+    """
+    Includes a StreamField block in the page, just like Wagtail's
+    `include_block`, but adds live editing capabilities.
+
+    The `object` argument is the object (eg, the page) that the StreamField that
+    this block came from is on.
+
+    The `field` argument is the name of the StreamField on that object, eg 'body'.
+    """
+
     context = context.flatten()
     request = context.get('request')
 

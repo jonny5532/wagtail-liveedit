@@ -63,9 +63,11 @@ def find_block(stream_value, block_id):
     """
     Search through the stream_value to find the block with the given id.
 
-    Recurses into StreamBlock and ListBlock items, and also into StructBlock fields.
+    Recurses into StreamBlock and ListBlock items, and also into StructBlock
+    fields.
 
-    Returns a tuple of (Block, StreamValue.StreamChild, setter function to update value, parent StreamValue)
+    Returns a tuple of (Block, StreamValue.StreamChild, setter function to
+    update value, parent StreamValue)
 
     """
 

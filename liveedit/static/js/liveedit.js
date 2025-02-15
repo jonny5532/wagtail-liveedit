@@ -92,25 +92,6 @@
             var iframe = document.createElement('iframe');
             iframe.setAttribute('src', url);
             con.appendChild(iframe);
-            
-
-            /*
-            let shadow = con.attachShadow({mode: 'open'});
-
-            fetch('/liveedit/test/')
-                .then(function(response) {
-                    return response.text();
-                }).then(function(text) {
-                    shadow.innerHTML = text;
-                    Array.from(shadow.querySelectorAll("script")).forEach( oldScript => {
-                        const newScript = document.createElement("script");
-                        Array.from(oldScript.attributes)
-                        .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
-                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-                });
-            */
 
             document.body.appendChild(con);
         }
