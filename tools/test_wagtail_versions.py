@@ -70,7 +70,11 @@ for version in versions[:number_to_test]:
     print("Testing version", version)
     results.append((version, run_tests(version)))
 
-results.sort(key=lambda x: tuple(int(i) for i in (x[0]+".0.0").split(".")[:3]), reverse=True)
+def parse_version(version):
+    bits = version.replace("rc", ".0.").split(".") + ["0"]*3
+    return tuple(int(i) for i in bits[:4])
+
+results.sort(key=lambda i: parse_version(i[0]), reverse=True)
 
 readme = open("../README.md", "r").read()
 COMPAT_MATRIX_HEADER = 'Wagtail version | Passing tests?\n----------------|---------------\n'
