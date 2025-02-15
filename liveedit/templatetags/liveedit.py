@@ -114,7 +114,10 @@ def _is_editing_allowed(object, request):
         elif getattr(request, 'is_dummy', False):
             # We are in preview mode, without a unpublished revision, don't allow editing
             return False, None
-            
+
+    elif not request.user.has_perm("%s.change" % object._meta.app_label):
+        return False, None
+    
     return True, None
 
 @register.simple_tag(takes_context=True)
