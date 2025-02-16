@@ -1,13 +1,8 @@
 from django import forms
 from django.contrib.auth.decorators import permission_required
-from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
-from django.forms.utils import ErrorList
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
-from django.template.exceptions import TemplateDoesNotExist
+from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -15,11 +10,9 @@ from django.views.decorators.http import require_http_methods
 import wagtail
 if wagtail.VERSION < (3,):
     from wagtail.core.blocks import BlockWidget
-    from wagtail.core.models import Page
     from wagtail.core.blocks.stream_block import StreamValue
 else:
     from wagtail.blocks import BlockWidget
-    from wagtail.models import Page
     from wagtail.blocks.stream_block import StreamValue
 
 from collections.abc import Sequence
@@ -69,14 +62,13 @@ def find_block(stream_value, block_id):
 
     Returns a tuple of (Block, StreamValue.StreamChild, setter function to
     update value, parent StreamValue)
-
     """
 
-    rb, rv, rsv, rp = _find_block(stream_value, stream_value.raw_data, block_id)
-    if rb is None:
+    block, value, set_value, parent_value = _find_block(stream_value, stream_value.raw_data, block_id)
+    if block is None:
         raise Exception("Couldn't find block %s in %s"%(block_id, stream_value))
         
-    return rb, rv, rsv, rp
+    return block, value, set_value, parent_value
 
 def modify_block(action, blocks, block_id):
     for i in range(len(blocks)):
