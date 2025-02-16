@@ -25,7 +25,8 @@ else:
 from collections.abc import Sequence
 import json
 import re
-from urllib.parse import urlencode, urlparse
+
+from .forms import BlockActionForm, BlockAppendForm, BlockEditForm
 
 def islist(v):
     return isinstance(v, Sequence)
@@ -104,49 +105,6 @@ def modify_block(action, blocks, block_id):
                         #if block was moved, stop looking
                         return True
 
-def get_latest_revision_and_save_function(obj, request):
-    """
-    For a given model instance, return the latest revision of that model
-    instance, as well as a function which saves it, as a tuple.
-    """
-
-    # The default behaviour is to update the current live page
-    def save():
-        obj.last_published_at = timezone.now()
-        obj.save()
-
-    if isinstance(obj, Page):
-        if obj.has_unpublished_changes:
-            # Modify the latest draft, not the published one
-            obj = obj.get_latest_revision_as_object()
-            
-            def save():
-                # Update the existing draft revision
-                rev = obj.get_latest_revision()
-                rev.content = obj.serializable_data()
-                rev.save()
-        elif not obj.get_latest_revision() or obj.get_latest_revision().user != request.user or (timezone.now() - obj.get_latest_revision().created_at).total_seconds() >= 3600:
-            # Create and publish a new revision
-            def save():
-                obj.save_revision(user=request.user).publish(user=request.user)
-    return obj, save
-
-def check_can_edit(user, obj, field_name):
-    if hasattr(obj, 'permissions_for_user'):
-        if not obj.permissions_for_user(user).can_edit():
-            raise PermissionDenied
-    elif not user.has_perm("%s.change" % obj._meta.app_label):
-        raise PermissionDenied
-
-    # For pages and snippets, check the requested field is present on the normal edit panel.
-
-    if isinstance(obj, Page):
-        if field_name not in obj.get_edit_handler().get_form_options()['fields']:
-            raise PermissionDenied
-    elif hasattr(obj, 'snippet_viewset'):
-        if field_name not in obj.snippet_viewset.get_edit_handler().get_form_options()['fields']:
-            raise PermissionDenied
-
 def render_edit_panel(request, d):
     # Steal all of the <script> and stylesheet tags from the admin base template
     admin_base = render_to_string("wagtailadmin/admin_base.html", request=request)
@@ -196,33 +154,35 @@ def wrap_error(err):
 @require_http_methods(["POST"])
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
 def action_view(request):
-    ct = get_object_or_404(ContentType.objects, pk=request.POST['content_type_id'])
-    obj = get_object_or_404(ct.model_class().objects, pk=request.POST['object_id'])
-    check_can_edit(request.user, obj, request.POST['object_field'])
-    obj, save = get_latest_revision_and_save_function(obj, request)
-    value = getattr(obj, request.POST['object_field'], None)
-    assert isinstance(value, StreamValue), "Expected a StreamValue, got %r" % value
+    form = BlockActionForm(request.POST, request=request)
+    if not form.is_valid():
+        return HttpResponse(str(form.errors), status=400)
 
-    block_id = request.POST['id']
+    save, value, block_id, action, redirect_url = (
+        form.cleaned_data['save'],
+        form.cleaned_data['value'],
+        form.cleaned_data['id'],
+        form.cleaned_data['action'],
+        form.cleaned_data['redirect_url'],
+    )
 
-    modify_block(request.POST['action'], value.raw_data, block_id)
+    modify_block(action, value.raw_data, block_id)
     save()
 
-    return HttpResponseRedirect(request.POST['redirect_url'])
+    return HttpResponseRedirect(redirect_url)
 
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
 def edit_block_view(request):
-    from wagtail.admin.views.pages.edit import EditView
-    view = EditView.as_view()
+    form = BlockEditForm(request.GET, request=request)
+    if not form.is_valid():
+        return HttpResponse(str(form.errors), status=400)
 
-    ct = get_object_or_404(ContentType.objects, pk=request.GET['content_type_id'])
-    obj = get_object_or_404(ct.model_class().objects, pk=request.GET['object_id'])
-    check_can_edit(request.user, obj, request.GET['object_field'])
-    obj, save = get_latest_revision_and_save_function(obj, request)
-    value = getattr(obj, request.GET['object_field'], None)
-    assert isinstance(value, StreamValue), "Expected a StreamValue, got %r" % value
+    value, save, block_id = (
+        form.cleaned_data['value'],
+        form.cleaned_data['save'],
+        form.cleaned_data['id']
+    )
 
-    block_id = request.GET['id']
     block, block_value, set_value, parent = find_block(value, block_id)
 
     errors = wrap_error(None)
@@ -256,14 +216,16 @@ def edit_block_view(request):
 
 @permission_required('wagtailadmin.access_admin', login_url='wagtailadmin_login')
 def append_block_view(request):
-    ct = get_object_or_404(ContentType.objects, pk=request.GET['content_type_id'])
-    obj = get_object_or_404(ct.model_class().objects, pk=request.GET['object_id'])
-    check_can_edit(request.user, obj, request.GET["object_field"])
-    obj, save = get_latest_revision_and_save_function(obj, request)
-    value = getattr(obj, request.GET['object_field'], None)
-    assert isinstance(value, StreamValue), "Expected a StreamValue, got %r" % value
+    form = BlockAppendForm(request.GET, request=request)
+    if not form.is_valid():
+        return HttpResponse(str(form.errors), status=400)
+    
+    value, save, block_id = (
+        form.cleaned_data['value'],
+        form.cleaned_data['save'],
+        form.cleaned_data.get('id'),
+    )
 
-    block_id = request.GET.get('id')
     if not block_id:
         # No existing block, use the top-level StreamValue as the parent.
         parent_value = value
