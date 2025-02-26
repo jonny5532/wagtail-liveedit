@@ -49,6 +49,15 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             email='administrator@email.com',
             password='password'
         )
+        self.user_without_perms = self.create_user(
+            username='user',
+            password='password',
+            is_staff=True,
+        )
+        self.user_without_perms.user_permissions.add(
+            ContentType.objects.get(app_label='wagtailadmin', model='admin').permission_set.get(codename='access_admin')
+        )
+
         self.root_page = Page.objects.get(pk=1)
 
         self.test_page = TestPage()
@@ -197,6 +206,18 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
         })
 
         self.assertIn('<p>This is the replacement rich text.</p>', str(TestPage.objects.get(pk=self.test_page.id).body))
+
+    def test_block_edit_twice(self):
+        # Should be no revisions at first
+        self.assertEqual(self.test_page.revisions.count(), 0)
+        
+        # This should create a new revision
+        self.test_block_edit()
+        self.assertEqual(self.test_page.revisions.count(), 1)
+        
+        # The second time shouldn't create a new revision
+        self.test_block_edit()
+        self.assertEqual(self.test_page.revisions.count(), 1)
 
     def test_block_edit_draft(self):
         self.login(user=self.user)
@@ -357,3 +378,23 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
             request=MockRequest(AnonymousUser())
         )
         self.assertNotIn('data-liveedit', ret)
+
+    def test_insufficient_permission(self):
+        self.login(user=self.user_without_perms)
+
+        ret = self.client.post('/__liveedit__/edit-block/?' + urllib.parse.urlencode({
+            'content_type_id':self.content_type.id,
+            'object_id':self.test_page.id,
+            'object_field':'body',
+            'id':self.test_page.body[0].id,
+        }), {
+            'block_edit_form-body':json.dumps({
+                "blocks":[{
+                    "text":"This is the replacement rich text.",
+                }],
+            })
+        })
+
+        self.assertEqual(ret.status_code, 400)
+        self.assertIn(b"Permission denied", ret.content)
+
