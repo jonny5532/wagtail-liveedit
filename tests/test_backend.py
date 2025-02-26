@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection, transaction
 from django.shortcuts import render
@@ -96,6 +97,12 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
         ])
         self.root_page.add_child(instance=self.test_page)
         self.content_type = ContentType.objects.get_for_model(TestPage)
+
+        self.empty_page = TestPage()
+        self.empty_page.title = "Empty"
+        self.empty_page.slug = 'empty'
+        self.empty_page.body = json.dumps([])
+        self.root_page.add_child(instance=self.empty_page)
 
     def test_liveedit_attributes(self):
         ret = render_to_string(
@@ -327,3 +334,26 @@ class BackendTestCase(WagtailPageTests, WagtailTestUtils):
     def test_block_first_form(self):
         self.check_block_form('/__liveedit__/append-block/', id="")
         
+    def test_unauthenticated(self):
+        """
+        Test that the liveedit attributes are not added when the user is not authenticated.
+        """
+        ret = render_to_string(
+            "page.html", 
+            {'page':self.test_page}, 
+            request=MockRequest(AnonymousUser())
+        )
+        self.assertNotIn('data-liveedit', ret)
+
+    def test_unauthenticated_empty_page(self):
+        """
+        Test that the liveedit attributes are not added when the user is not
+        authenticated, for a page without any blocks (but with a new-block
+        placeholder).
+        """
+        ret = render_to_string(
+            "page.html", 
+            {'page':self.empty_page}, 
+            request=MockRequest(AnonymousUser())
+        )
+        self.assertNotIn('data-liveedit', ret)

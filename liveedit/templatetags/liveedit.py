@@ -176,12 +176,7 @@ def liveedit_include_block(context, block, object=None, field=None):
 
     def finish():
         if not block:
-            # No block to render, so insert a placeholder that can be used to
-            # insert a new block.
-            return format_html(
-                '<div data-liveedit="{}" style="height: 2px"></div>',
-                json.dumps(context['liveedit_data'])
-            )
+            return ''
         return block.render_as_block(context)
 
     if not is_enabled(request) or not is_authenticated(request):
@@ -209,6 +204,14 @@ def liveedit_include_block(context, block, object=None, field=None):
         })
 
     context['liveedit_data'] = data
+
+    if not block:
+        # No block to render, so insert a placeholder that can be used to
+        # insert a new block.
+        return format_html(
+            '<div data-liveedit="{}" style="height: 2px"></div>',
+            json.dumps(context['liveedit_data'])
+        )
     
     return finish()
 

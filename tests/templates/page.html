@@ -22,6 +22,8 @@
         {% endcomment %}
         {% liveedit_include_block block object=page field="body" %}
     {% endif %}
+{% empty %}
+    {% liveedit_insert_new object=page field="body" %}
 {% endfor %}
 
     {% liveedit_js %}
