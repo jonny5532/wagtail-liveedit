@@ -26,6 +26,25 @@
 }
 .liveedit-bar button:hover { background: rgb(0, 103, 106); }
 
+.liveedit-bar button:first-child {
+    border-radius: 4px 0 0 4px;
+}
+.liveedit-bar button:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.liveedit-icon-right {
+    width: 12px;
+    height: 18px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' height='11' viewBox='0 0 7.885 8.104'%3E%3Cpath fill='%23fff' d='M2.802 8.104V6.1H0V2.021h2.802V0l5.083 4.052zm0 0'/%3E%3C/svg%3E") center no-repeat;
+}
+
+.liveedit-icon-left {
+    width: 12px;
+    height: 18px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' height='11' viewBox='0 0 7.885 8.104'%3E%3Cpath fill='%23fff' d='M5.083 8.104V6.1h2.802V2.021H5.083V0L0 4.052zm0 0'/%3E%3C/svg%3E") center no-repeat;
+}
+
 [data-liveedit-active]:hover > .liveedit-bar { display: block; }
 
 /* Nested edit bars should sit under parent ones */
@@ -42,6 +61,7 @@
     z-index: 10000; /* need to overlap wagtail-user-bar which is 9999 */
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
     transition: bottom 0.3s ease;
+    left: 0;
     bottom: -60vh;
 }
 

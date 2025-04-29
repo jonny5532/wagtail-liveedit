@@ -46,7 +46,9 @@
 
         if(data.id) {
             var btn = document.createElement('button');
-            btn.appendChild(document.createTextNode('🡄'));
+            var icon = document.createElement('div');
+            icon.classList.add('liveedit-icon-left');
+            btn.appendChild(icon);
             btn.addEventListener('click', function(ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
@@ -55,7 +57,9 @@
             bar.appendChild(btn);
 
             var btn = document.createElement('button');
-            btn.appendChild(document.createTextNode('🡆'));
+            var icon = document.createElement('div');
+            icon.classList.add('liveedit-icon-right');
+            btn.appendChild(icon);
             btn.addEventListener('click', function(ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
