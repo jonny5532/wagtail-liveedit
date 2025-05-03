@@ -63,10 +63,9 @@ root = ET.fromstring(requests.get("https://pypi.org/rss/project/wagtail/releases
 versions = [el.text for el in root.findall('.//item/title')]
 versions = skip_old_rcs(versions)
 
-number_to_test = int(sys.argv[1]) if len(sys.argv)>1 else 10
 results = []
 
-for version in versions[:number_to_test]:
+for version in versions:
     print("Testing version", version)
     results.append((version, run_tests(version)))
 
