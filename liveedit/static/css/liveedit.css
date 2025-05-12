@@ -34,15 +34,15 @@
 }
 
 .liveedit-icon-right {
-    width: 12px;
+    width: 13px;
     height: 18px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' height='11' viewBox='0 0 7.885 8.104'%3E%3Cpath fill='%23fff' d='M2.802 8.104V6.1H0V2.021h2.802V0l5.083 4.052zm0 0'/%3E%3C/svg%3E") center no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13'%3E%3Cpath fill='%23fff' d='M4.62 13V9.785H0V3.242h4.62V0L13 6.5z'/%3E%3C/svg%3E") top 2px center no-repeat;
 }
 
 .liveedit-icon-left {
-    width: 12px;
+    width: 13px;
     height: 18px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' height='11' viewBox='0 0 7.885 8.104'%3E%3Cpath fill='%23fff' d='M5.083 8.104V6.1h2.802V2.021H5.083V0L0 4.052zm0 0'/%3E%3C/svg%3E") center no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13'%3E%3Cpath fill='%23fff' d='M8.38 13V9.785H13V3.242H8.38V0L0 6.5z'/%3E%3C/svg%3E") top 2px center no-repeat;
 }
 
 [data-liveedit-active]:hover > .liveedit-bar { display: block; }
@@ -76,9 +76,10 @@
 
 .liveedit-topbar svg {
     display: block;
-    width: 16px; 
+    width: 18px; 
     fill: #ffffff; 
-    margin: 0 20px 0 0;
+    padding: 5px;
+    margin: 0 15px 0 0;
 }
 
 .liveedit-title {
