@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='wagtail-liveedit',
-      version='0.0.21',
+      version='0.0.22',
       description='Live editing add-on for Wagtail CMS',
       author='jonny5532',
       license='MIT',
@@ -17,6 +17,6 @@ setup(name='wagtail-liveedit',
       packages=find_packages(exclude=['tests', 'tests.migrations']),
       include_package_data=True,
       install_requires=[
-          'wagtail>=5.2.8,<=7.0',
+          'wagtail>=5.2.8,<7.1',
       ],
      )
