@@ -23,6 +23,7 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 
 import json
 import os
+import random
 import socket
 import time
 import uuid
@@ -30,7 +31,7 @@ import uuid
 from .models import TestPage
 
 hostname = socket.gethostname()
-local_ip = socket.gethostbyname(hostname)
+local_ip = os.environ.get('TEST_LIVE_SERVER_HOST', socket.gethostbyname(hostname))
 
 class LiveServerSingleThread(LiveServerThread):
     """Runs a single threaded server rather than multi threaded. Reverts https://github.com/django/django/pull/7832"""
@@ -52,7 +53,7 @@ class LiveServerSingleThreadedTestCase(StaticLiveServerTestCase):
 
 class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTestUtils):
     host = '0.0.0.0'
-    port = 31411
+    port = random.randint(20000, 30000)
 
     def setUp(self):
         super(FrontendTest, self).setUp()
@@ -136,7 +137,7 @@ class FrontendTest(LiveServerSingleThreadedTestCase, WagtailPageTests, WagtailTe
         self.driver.save_screenshot("/tmp/out.png")
         #print(self.driver.page_source)
 
-        h2 = self.sel('h2')
+        h2 = self.sel('.Draftail-Editor h2')
         h2.click()
         h2.send_keys('extra_header_text')
 

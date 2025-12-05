@@ -20,7 +20,7 @@ subprocess.run([
 ])
 selenium_ip = subprocess.check_output([
     "docker", "inspect", 
-        "--format", "{{ .NetworkSettings.IPAddress }}", 
+        "--format", "{{ .NetworkSettings.Networks.bridge.IPAddress }}", 
         "selenium-chrome-4.10.0"
 ], encoding='utf-8').strip()
 assert selenium_ip, "Selenium container not found!"
@@ -37,12 +37,25 @@ def run_tests(wagtail_version):
 
     image = b.stdout.decode('ascii').strip()
 
+    subprocess.run([
+        "docker", "rm", "-f", "le-test-container"
+    ], capture_output=True)
+
     r = subprocess.run([
         "docker", "run",# "-it",
-            "--rm",
+            "--name=le-test-container",
             "-e", "SELENIUM_HOST=" + selenium_ip,
             image,
     ], capture_output=False)
+
+    subprocess.run([
+        "docker", "cp", f"le-test-container:/tmp/out.png", f"/tmp/out-{wagtail_version}.png"
+    ], capture_output=True)
+
+    subprocess.run([
+        "docker", "rm", "-f", "le-test-container"
+    ], capture_output=True)
+
     return r.returncode
 
 def skip_old_rcs(versions):

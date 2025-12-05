@@ -5,6 +5,8 @@
 ## Testing locally
 
 ```export DATABASE_FILE=/tmp/test.db
+export SELENIUM_HOST=172.17.0.7
+export TEST_LIVE_SERVER_HOST=192.168.1.10
 ./manage.py migrate
 ./manage.py createsuperuser
 ./manage.py runserver```
