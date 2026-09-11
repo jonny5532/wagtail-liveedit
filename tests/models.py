@@ -51,6 +51,8 @@ class TestPage(Page):
             ('text', blocks.TextBlock(required=True)),
         ])),
 
+        ('textline', blocks.CharBlock(required=False)),
+
     ], **STREAMFIELD_ARGS, null=True, blank=True)
 
     content_panels = Page.content_panels + [

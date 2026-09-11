@@ -80,6 +80,7 @@
     fill: #ffffff; 
     padding: 5px;
     margin: 0 15px 0 0;
+    box-sizing: content-box;
 }
 
 .liveedit-title {

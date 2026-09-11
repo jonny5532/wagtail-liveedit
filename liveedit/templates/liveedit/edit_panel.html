@@ -8,7 +8,7 @@
     <style>
     body { background: #ffffff; padding-bottom: 1rem; }
     .c-sf-container { padding: 0 !important; }
-    .c-sf-block__content-inner { padding: 1.2rem 1.8rem; }
+    .c-sf-block__content-inner { padding: 1.5rem 2.4rem; }
     .w-panel__anchor { visibility: hidden !important; }
     </style>
 </head>
@@ -21,6 +21,8 @@
 
     <form method="post">
         {% csrf_token %}
+        {# Default submit for if you press Enter. #}
+        <input type="submit" hidden>
         <div class="w-panel w-panel--nested">
             <div class="c-sf-container">
                 <div class="c-sf-block__content-inner">
@@ -40,8 +42,11 @@
                         </fieldset>
                     </div>
                     
-                    <div style="float: right"><input type="submit" name="delete" value="Delete" onclick="return confirm('Delete block - are you sure?')" class="button button-secondary no"></div>
-                    <input type="submit" value="Save" class="button"><!--<a href="#" class="button button-secondary" onclick="window.parent.postMessage({action:'close_panel'}, '*')">Close without saving</a>-->
+                    <div class="fields" style="display: flex">
+                        <input type="submit" name="delete" value="Delete" onclick="return confirm('Delete block - are you sure?')" class="button button-secondary no">
+                        <button type="button" class="button button-secondary" style="margin-left: auto" onclick="window.parent.postMessage({action:'close_panel'}, '*')">Cancel</button>
+                        <input type="submit" value="Save" class="button">
+                    </div>
                 </div>
             </div>
         </div>
