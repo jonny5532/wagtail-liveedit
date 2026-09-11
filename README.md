@@ -15,14 +15,15 @@ Allow StreamField blocks to be edited via your Wagtail site's frontend.
 
 Wagtail version | Passing tests?
 ----------------|---------------
-7.3             | :heavy_check_mark:
-7.2.2           | :heavy_check_mark:
+8.0             | :heavy_check_mark:
+7.4.3           | :heavy_check_mark:
+7.3.4           | :heavy_check_mark:
+7.2.3           | :heavy_check_mark:
 7.1.3           | :heavy_check_mark:
-7.0.5           | :heavy_check_mark:
+7.0.9           | :heavy_check_mark:
 6.4.2           | :heavy_check_mark:
-6.3.7           | :heavy_check_mark:
+6.3.8           | :heavy_check_mark:
 6.2.4           | :heavy_check_mark:
-5.2.8           | :heavy_check_mark:
 
 ## Installation
 

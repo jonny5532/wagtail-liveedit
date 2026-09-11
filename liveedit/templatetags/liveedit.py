@@ -6,7 +6,12 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 
-from wagtail.admin.views.pages.preview import PreviewOnEdit
+try:
+    # Wagtail >= 8.0
+    from wagtail.admin.views.pages.preview import PreviewOnEditView as PreviewOnEdit
+except ImportError:
+    # Wagtail < 8.0
+    from wagtail.admin.views.pages.preview import PreviewOnEdit
 
 try:
     # Wagtail >= 5.0

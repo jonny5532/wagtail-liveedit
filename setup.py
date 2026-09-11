@@ -17,6 +17,6 @@ setup(name='wagtail-liveedit',
       packages=find_packages(exclude=['tests', 'tests.migrations']),
       include_package_data=True,
       install_requires=[
-          'wagtail>=5.2.8,<7.4',
+          'wagtail>=5.2.8,<8.1',
       ],
      )

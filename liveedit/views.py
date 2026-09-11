@@ -107,11 +107,19 @@ def render_edit_panel(request, d):
     if wagtail.VERSION < (4,):
         editor_css = mark_safe(render_to_string("wagtailadmin/pages/_editor_css.html", request=request))
 
+    if wagtail.VERSION >= (8,):
+        # Use a shim template to call the editor JS hook
+        editor_js = mark_safe(render_to_string("liveedit/editor_js.html", request=request))
+    else:
+        # Older Wagtail versions have such a shim already
+        editor_js = mark_safe(render_to_string("wagtailadmin/pages/_editor_js.html", request=request))
+
     ret = render(request, "liveedit/edit_panel.html", {
         **d,
         'script_tags': script_tags,
         'stylesheet_tags': stylesheet_tags,
-        'editor_css': editor_css
+        'editor_css': editor_css,
+        'editor_js': editor_js
     })
     ret['X-Frame-Options'] = 'SAMEORIGIN'
     return ret
